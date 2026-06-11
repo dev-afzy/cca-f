@@ -22,26 +22,27 @@ const prisma = new PrismaClient({ adapter });
 const SLUG_TO_HOUR: Record<string, number> = {
   "model-selection": 1,
   "context-window-mgmt": 2,
-  "token-mechanics-cost": 3,
+  "batch-extraction-quality": 3,
   "structured-outputs": 4,
   "tool-calling-mechanics": 5,
   "tool-calling-patterns": 6,
   // Week 1 consolidation = hour 7 (no dedicated concept)
   "mcp-architecture": 8,
   "mcp-primitives": 9,
-  "stateful-tools-security": 10,
-  "skill-vs-tool": 10,
-  "agent-pattern-router": 11,
+  "tool-interface-errors": 10,
+  "skill-vs-tool": 9,
+  "error-propagation-provenance": 11,
   "agent-pattern-orch": 12,
   "agent-pattern-eval": 13,
-  // agentic-loop-termination = cross-cutting (no fixed hour)
-  "data-privacy-pii": 15,
-  "prompt-injection": 16,
+  "agentic-loop-termination": 5,
+  "claude-md-rules": 15,
+  "skills-commands-planmode": 16,
   "guardrails": 17,
-  "prompt-caching": 18,
+  "cicd-refinement": 18,
   "prompt-engineering": 19,
   "multi-agent-orchestration": 20,
   "session-management": 21,
+  "multi-instance-review": 13,
 };
 
 type ConceptStats = {

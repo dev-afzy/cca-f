@@ -5,6 +5,20 @@ import os from "node:os";
 import { CONCEPT_SEED } from "../src/lib/concept-seed";
 import { QUESTION_SEED } from "../src/lib/question-seed";
 
+// Concepts/questions removed from the exam-aligned curriculum. Deleting the
+// concept cascades its masteries; FrictionPoint keeps its text with a null
+// concept. Deleting a question cascades its attempts.
+const RETIRED_CONCEPT_SLUGS = [
+  "token-mechanics-cost",
+  "stateful-tools-security",
+  "agent-pattern-router",
+  "data-privacy-pii",
+  "prompt-injection",
+  "prompt-caching",
+  "error-handling-resp",
+];
+const RETIRED_QUESTION_SLUGS = ["prompt-caching-breakpoint-placement"];
+
 const dbPath = path.join(os.homedir(), ".cca-f-tutor", "cca-f.db");
 const adapter = new PrismaLibSql({ url: `file:${dbPath}` });
 const prisma = new PrismaClient({ adapter });
@@ -35,6 +49,14 @@ async function main() {
       ledgerPath: "~/.cca-f-tutor/student-ledger.md",
     },
     update: {},
+  });
+
+  console.log("Retiring out-of-scope concepts/questions...");
+  await prisma.question.deleteMany({
+    where: { slug: { in: RETIRED_QUESTION_SLUGS } },
+  });
+  await prisma.concept.deleteMany({
+    where: { slug: { in: RETIRED_CONCEPT_SLUGS } },
   });
 
   console.log("Seeding concepts...");
