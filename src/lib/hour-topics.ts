@@ -1,7 +1,7 @@
 export const HOUR_TOPICS: Record<number, string> = {
-  1: "Diagnostic + Model Family Map",
+  1: "Diagnostic + Exam Map & Distractor Literacy",
   2: "Context Window Management",
-  3: "Token Mechanics & Cost Optimization",
+  3: "Batch Processing & Extraction Quality",
   4: "Structured Outputs (JSON Mode)",
   5: "Tool Calling Mechanics",
   6: "Tool Calling Patterns",

@@ -1,6 +1,6 @@
 # Curriculum — 23 Hours, 4 Weeks
 
-Structure follows the attached blueprint: Week 1 patches API foundations, Week 2 goes deep on MCP and agents, Week 3 covers enterprise concerns, and Week 4 closes the Agentic Architecture deep-dive (multi-agent orchestration, session management) before running the mocks.
+Structure follows the official CCA-F exam guide: Week 1 patches API foundations and extraction quality, Week 2 goes deep on MCP, tool design, and agent patterns, Week 3 covers Claude Code configuration and production workflows (Domain 3, 20% of the exam), and Week 4 closes the Agentic Architecture deep-dive (multi-agent orchestration, session management) before running the mocks. Domain weights: Agentic 27%, Claude Code 20%, Prompts 20%, Tool & MCP 18%, Context 15%.
 
 Each hour gives:
 - **Objectives** (what the student should be able to do at the end)
@@ -14,18 +14,20 @@ The instructor (you) generates the actual teaching content live, using the Child
 
 ## Week 1 — Foundation Patching & Core API Architecture (Hours 1–7)
 
-### Hour 1 — Diagnostic + Model Family Map
+### Hour 1 — Diagnostic + Exam Map & Distractor Literacy
 
-**Objectives:** Surface broken knowledge across the four prereq courses. Build a clean mental map of Haiku / Sonnet / Opus selection criteria.
+**Objectives:** Surface broken knowledge across the four prereq courses. Internalize the exam's structure and scoring. Learn the distractor patterns the exam reuses — including why "switch to a bigger model" is almost always a wrong answer.
 
 **Topics:**
 - Run the 3-question diagnostic battery from `pedagogy.md`.
-- The model family: latency, cost, context window, capability tradeoffs.
-- Selection heuristics: classifier/router → Haiku; generation/reasoning → Sonnet; planning/orchestration of complex tasks → Opus.
+- Exam map: 5 domains weighted 27% (Agentic) / 20% (Claude Code) / 20% (Prompts) / 18% (Tool & MCP) / 15% (Context). Questions are framed by 4 scenarios drawn at random from 6 published ones (customer support agent, Claude Code codegen, multi-agent research, developer productivity, CI/CD, structured data extraction).
+- Scoring mechanics: scaled 100–1,000, pass mark 720, pass/fail only, no penalty for guessing — never leave a blank.
+- Distractor literacy: the recurring wrong-answer shapes — model-swap ("switch to Opus"), prompt-as-enforcement, over-engineering (classifiers/routing layers when a criteria fix suffices), more-tokens/more-context.
+- Model family (Haiku/Sonnet/Opus) as background vocabulary only: the exam uses model selection in *distractors*, not as a tested topic. Know the latency/cost/capability tradeoffs so you can recognize when a model swap dodges the structural fix.
 
-**Friction zones:** Confusing model size with context window size. Picking Opus "to be safe" when Haiku would meet the SLA at 1/12th the cost. Not understanding why latency matters for agentic inner loops.
+**Friction zones:** Treating model choice as a tested topic and memorizing benchmark numbers. Picking "switch to Opus" under pressure. Studying by domain weight alone instead of practicing scenario judgment.
 
-**Analogy seed:** Picking a model is like picking a vehicle. Haiku is a scooter (fast, cheap, weaves through small jobs), Sonnet is a sedan (handles most trips well), Opus is a moving truck (slow and pricey but moves anything).
+**Analogy seed:** The exam guide is a trail map. The weights show where the elevation is; the distractors are false trails that look freshly groomed precisely so you'll take them.
 
 ---
 
@@ -37,28 +39,33 @@ The instructor (you) generates the actual teaching content live, using the Child
 - Context window vs `max_tokens` — they are different numbers, often confused.
 - The `system` block, conversation history, message structure.
 - Strategies: sliding window, summarization compaction, RAG, fact extraction.
+- The "lost in the middle" effect: models attend reliably to the start and end of long inputs — put key-findings summaries first and use explicit section headers.
+- A persistent "case facts" block: extract transactional facts (amounts, dates, order numbers, statuses) into a structured block included in every prompt, outside summarized history, so progressive summarization can't blur them.
+- Trimming verbose tool results to only relevant fields *before* they accumulate (a 40-field order lookup when 5 fields matter).
 - When the long-context approach beats RAG and when it doesn't.
 
-**Friction zones:** Treating context window as if it's free. Sending the entire history every turn. Not knowing where to put the most cache-friendly content (long-stable docs near the top).
+**Friction zones:** Treating context window as if it's free. Sending the entire history every turn. Not knowing where to put the most cache-friendly content (long-stable docs near the top). Progressive summarization that turns "$847.50 refund by Friday" into "a refund was discussed". Letting raw tool outputs pile up turn after turn.
 
 **Analogy seed:** Context window is like a chef's prep counter. You can only fit so much. You can put everything on it (long-context), or you can have a runner bring ingredients in just-in-time (RAG), or you can keep a tidy summary of what's already been used (compaction).
 
 ---
 
-### Hour 3 — Token Mechanics & Cost Optimization
+### Hour 3 — Batch Processing & Extraction Quality
 
-**Objectives:** Predict token cost roughly. Know when to escalate models. Spot caching candidates.
+**Objectives:** Match synchronous vs Message Batches API to workflow latency tolerance. Design validation-retry loops that know their own limits. Route low-confidence extractions to human review with calibrated thresholds.
 
 **Topics:**
-- Tokens ≠ characters ≠ words. BPE intuition.
-- Input vs output token pricing asymmetry.
-- The cascade pattern (cheap model gates expensive model).
-- Streaming vs non-streaming and perceived latency.
-- Prompt caching is introduced as a teaser — full depth comes in Week 3.
+- Message Batches API: 50% cost savings, up to 24-hour processing window, **no guaranteed latency SLA**, `custom_id` for request/response correlation, no multi-turn tool calling within a batch request.
+- Matching API to workflow: blocking work (pre-merge checks) stays synchronous; latency-tolerant work (overnight reports, weekly audits, nightly test generation) goes to batch.
+- Failure handling: resubmit only the failed `custom_id`s, with modifications (e.g., chunking documents that blew the context limit). Refine prompts on a sample set before batching large volumes.
+- Retry-with-error-feedback: resend the document + failed extraction + specific validation error. Know when retries CANNOT work — the information simply isn't in the source document.
+- Field-level confidence scores, calibrated against labeled validation sets — never raw self-reported confidence.
+- Stratified random sampling of high-confidence extractions to measure error rates and catch novel failure patterns.
+- Segment accuracy by document type and field: a 97% aggregate can hide a failing segment.
 
-**Friction zones:** Estimating tokens as if 1 word = 1 token. Forgetting that output tokens are often 5x more expensive than input. Not realizing you can serve 90% of requests with a cheaper model and only escalate the hard ones.
+**Friction zones:** Putting a blocking workflow on the batch API because "it's usually fast". Retrying an extraction whose data isn't in the document. Trusting aggregate accuracy. Using uncalibrated self-reported confidence for review routing.
 
-**Analogy seed:** Tokens are like packing peanuts. They take up space whether or not the box is full, and you pay by the peanut, not the box.
+**Analogy seed:** Batch vs sync is overnight freight vs a courier — half the price if nobody is standing at the door waiting. Confidence calibration is a bathroom scale you verify against known weights before you trust its readings.
 
 ---
 
@@ -71,8 +78,10 @@ The instructor (you) generates the actual teaching content live, using the Child
 - Tool definitions as a way to force schema adherence.
 - Validation, retry-on-malformed patterns.
 - When *not* to use structured outputs (natural-language is often better for human-facing).
+- Schema design details the exam tests: optional/nullable fields so the model returns `null` instead of fabricating values for required fields; enum + `"other"` + detail-string for extensible categories; an `"unclear"` enum value for ambiguous cases.
+- Strict schemas via tool use eliminate *syntax* errors but not *semantic* errors (line items that don't sum to the stated total) — validate semantics separately, e.g. extract `calculated_total` alongside `stated_total` and flag discrepancies.
 
-**Friction zones:** Trying to coerce JSON via prompt alone when tools-as-schema is more reliable. No validation step. No retry strategy for malformed output. Over-using JSON when the downstream consumer is a human.
+**Friction zones:** Trying to coerce JSON via prompt alone when tools-as-schema is more reliable. No validation step. No retry strategy for malformed output. Over-using JSON when the downstream consumer is a human. Marking every field required and forcing fabrication. Assuming schema compliance means the values are correct.
 
 **Analogy seed:** Asking for JSON via prompt is like asking a friend to write you a check using only a description. Defining a tool schema is handing them a real check template with boxes to fill in.
 
@@ -104,8 +113,10 @@ The instructor (you) generates the actual teaching content live, using the Child
 - Forced tool use for guaranteed extraction.
 - Tool result formatting (strings vs structured).
 - When tools are over-engineering (a single prompt would have done it).
+- Tool-count degradation: 18 tools instead of 4–5 measurably degrades selection reliability. Scope each agent's tool set to its role.
+- Scoped cross-role tools for high-frequency needs (a `verify_fact` tool for a synthesis agent) while routing complex cases through the coordinator.
 
-**Friction zones:** Always defaulting to `tool_choice: auto`. Not knowing `none` exists. Setting up tools for trivial prompts. Letting the model decide *whether* to use tools when you've already decided it must.
+**Friction zones:** Always defaulting to `tool_choice: auto`. Not knowing `none` exists. Setting up tools for trivial prompts. Letting the model decide *whether* to use tools when you've already decided it must. Granting every agent every tool "to be flexible".
 
 **Analogy seed:** `tool_choice` is the difference between letting the model pick its own kitchen knife (`auto`), forcing it to use *some* knife (`any`), forcing the chef's knife specifically (`tool`), or saying "no knives this time, just talk" (`none`).
 
