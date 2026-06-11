@@ -42,7 +42,7 @@ Turn 2 (after user answers Q1): grade Q1 against the Diagnostic Rubric in pedago
 Turn 3 (after user answers Q2): same pattern — grade Q2, update mastery for its concepts, then ask Diagnostic Question 3.
 Turn 4 (after user answers Q3): grade Q3, update mastery for its concepts, then call \`advance_hour\` to move to Hour 1, and begin Hour 1 content normally in the same response.
 
-The full concept coverage across all three questions: model-selection, tool-calling-mechanics, agentic-loop-termination, mcp-architecture, mcp-primitives, skill-vs-tool, error-handling-resp. Each question only touches a subset — only call \`update_mastery\` for the concepts that question actually tested.
+The full concept coverage across all three questions: model-selection, tool-calling-mechanics, agentic-loop-termination, mcp-architecture, mcp-primitives, skill-vs-tool, error-propagation-provenance. Each question only touches a subset — only call \`update_mastery\` for the concepts that question actually tested.
 
 Never ask more than one diagnostic question per turn. Never grade questions the user has not yet answered.
 

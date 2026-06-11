@@ -148,9 +148,9 @@ Mark each signal `S/W/B`. Compute initial mastery scores per concept area:
 - **Model Selection**: S=80%, W=50%, B=20%
 - **Tool Calling Mechanics**: S=80%, W=50%, B=20%
 - **Agentic Loop & Termination**: S=80%, W=50%, B=15% (this is high-frequency exam content — broken here is a red flag)
-- **MCP Fundamentals**: S=75%, W=45%, B=20%
+- **MCP Integration & Configuration**: S=75%, W=45%, B=20%
 - **Skill vs Tool boundary**: S=75%, W=40%, B=15% (common confusion)
-- **Error Handling Responsibility**: S=70%, W=40%, B=20%
+- **Error Propagation & Provenance**: S=70%, W=40%, B=20%
 
 Seed these into the `[Concept Mastery]` section of the student ledger.
 
