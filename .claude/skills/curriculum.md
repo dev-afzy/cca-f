@@ -261,37 +261,43 @@ The instructor (you) generates the actual teaching content live, using the Child
 
 ---
 
-## Week 3 — Enterprise Architecture & Security (Hours 15–19)
+## Week 3 — Claude Code Configuration & Production Workflows (Hours 15–19)
 
-### Hour 15 — Data Privacy & PII Handling
+### Hour 15 — CLAUDE.md Hierarchy & Path-Scoped Rules
 
-**Objectives:** Apply the right pattern for handling PII in agent flows. Distinguish redaction from policy enforcement.
+**Objectives:** Place instructions at the correct hierarchy level. Keep CLAUDE.md modular with @import and rules files. Diagnose "Claude ignores my conventions" by checking what's actually loaded.
 
 **Topics:**
-- Where PII enters an agent system (user input, tool results, fetched docs).
-- Redaction at boundaries vs hoping the model "behaves".
-- Log hygiene — PII in observability is still PII.
-- Data residency and what gets sent where.
+- The hierarchy: user-level `~/.claude/CLAUDE.md` (personal, NOT shared via version control), project-level (root `CLAUDE.md` or `.claude/CLAUDE.md`, shared with the team), directory-level (subdirectory `CLAUDE.md` files).
+- The classic diagnosis: a new teammate doesn't get the team's instructions because they live in someone's user-level file.
+- `@import` syntax to reference external standards files — keep each package's CLAUDE.md slim and selective.
+- `.claude/rules/` topic files (`testing.md`, `api-conventions.md`) instead of one monolith.
+- Path-scoped rules: YAML frontmatter `paths: ["terraform/**/*"]` so a rule loads only when editing matching files — less irrelevant context, fewer tokens.
+- Glob rules beat directory-level CLAUDE.md when a convention spans directories (test files everywhere: `**/*.test.tsx`).
+- `/memory` to verify which memory files are loaded when behavior is inconsistent across sessions.
 
-**Friction zones:** Trusting the system prompt to "not leak PII". Logging full prompts including PII. Forgetting that tool results can also contain PII.
+**Friction zones:** Team standards in user scope. One 2,000-line CLAUDE.md. Directory files for conventions that cut across the tree. Never checking `/memory` when instructions "randomly" stop applying.
 
-**Analogy seed:** PII is like food allergens. You don't tell the chef "be careful" and hope — you remove the allergen at the supplier level, or you label everything and gate it at the kitchen door.
+**Analogy seed:** User-level is your personal notebook, project-level is the building code, directory-level is the sign on one room's door. Path-scoped rules are dress codes that apply by occasion, not by address.
 
 ---
 
-### Hour 16 — Prompt Injection Mitigation
+### Hour 16 — Slash Commands, Skills & Plan Mode
 
-**Objectives:** Recognize prompt injection vectors. Apply layered defenses.
+**Objectives:** Scope commands and skills correctly. Use skill frontmatter deliberately. Choose plan mode vs direct execution by task complexity, and protect the main context during exploration.
 
 **Topics:**
-- Direct injection (user input) vs indirect (fetched docs, tool results, emails).
-- Why "just tell the model to ignore instructions" fails.
-- Defense layers: input filtering, output filtering, tool-result quoting, hooks/gates on dangerous actions, principle of least privilege on tools.
-- The "untrusted content" frame: any content from outside the user message is untrusted.
+- Slash commands: project `.claude/commands/` (version-controlled, every developer gets them on clone/pull) vs personal `~/.claude/commands/`.
+- Skills in `.claude/skills/` with SKILL.md frontmatter: `context: fork` (run in an isolated sub-agent context so verbose output doesn't pollute the main conversation), `allowed-tools` (restrict tool access during the skill), `argument-hint` (prompt for required parameters).
+- Personal skill variants under different names in `~/.claude/skills/` so teammates aren't affected.
+- Skills (on-demand, task-specific workflows) vs CLAUDE.md (always-loaded universal standards).
+- Plan mode: for large-scale changes, multiple valid approaches, architectural decisions, multi-file modifications — explore and design before committing. Direct execution: well-scoped changes (single-file fix with a clear stack trace). Combine: plan the migration, then execute the plan.
+- The Explore subagent isolates verbose discovery output and returns summaries — main context survives multi-phase tasks.
+- `/compact` when extended sessions fill with discovery output; scratchpad files persisting key findings across context boundaries; crash recovery via structured state manifests the coordinator reloads on resume.
 
-**Friction zones:** Believing the system prompt is a guardrail. Granting tools broader permissions than the task needs. No interception on dangerous actions.
+**Friction zones:** Skipping plan mode on architectural work ("I'll switch if it gets complex" — the complexity is already in the requirements). Verbose skills without `context: fork`. Six-hour sessions that never compact and start citing "typical patterns" instead of the actual code.
 
-**Analogy seed:** Prompt injection is like a stranger slipping a note into your kid's lunchbox. "Tell them not to read notes from strangers" doesn't work. You inspect what goes in the lunchbox.
+**Analogy seed:** Plan mode is the architect's site survey before demolition day. The Explore subagent is sending a scout who returns with a one-page report instead of marching the whole army through the swamp.
 
 ---
 
@@ -305,44 +311,54 @@ The instructor (you) generates the actual teaching content live, using the Child
 - Output filters / classifiers as a final layer.
 - Why programmatic enforcement beats prompt-based "never do X" rules.
 - The exam's favorite distractor: "add a sentence to the system prompt."
+- Escalation design (the other half of this hour): explicit escalation criteria with few-shot examples in the system prompt are the CORRECT, proportionate fix when the agent's decision boundaries are unclear — this is not "prompt-as-guardrail", it's criteria definition.
+- Honor an explicit customer request for a human immediately; acknowledge frustration but offer resolution when the issue is in capability — escalate if they reiterate.
+- Escalate on policy gaps (the policy is silent or ambiguous on this case), not just "hard" cases.
+- Multiple customer matches → ask for additional identifiers; never pick by heuristic.
+- The proportionality principle: hooks for rules that must NEVER break (deterministic compliance); prompt criteria for judgment calibration. Sentiment and self-reported confidence are unreliable proxies for both.
 
-**Friction zones:** Reaching for system prompt wording when a hook is the right answer. Stacking only one layer. Not knowing where in the lifecycle the hook fires.
+**Friction zones:** Reaching for system prompt wording when a hook is the right answer. Stacking only one layer. Not knowing where in the lifecycle the hook fires. Over-correcting into "every fix must be a hook" — the exam also punishes over-engineering when explicit criteria would do.
 
 **Analogy seed:** Telling your kid "don't touch the stove" is guidance. Installing a child lock is enforcement. Guidance helps; enforcement guarantees.
 
 ---
 
-### Hour 18 — Prompt Caching Deep Dive
+### Hour 18 — Claude Code in CI/CD & Iterative Refinement
 
-**Objectives:** Structure a prompt so the cache hits. Estimate cache savings. Know cache breakpoint rules.
+**Objectives:** Run Claude Code headless in pipelines with structured output. Design reviews that don't re-litigate or duplicate. Apply iterative refinement techniques instead of prose-tweaking.
 
 **Topics:**
-- How prompt caching works: long-stable content at the top, volatile content at the bottom.
-- `cache_control` breakpoints — where you can place them and how many.
-- TTL behavior.
-- Cost math: cache writes vs cache reads vs uncached input.
-- When caching doesn't help (highly variable prompts, very short prompts).
+- `-p` / `--print` for non-interactive mode — the fix when a CI job hangs waiting for input.
+- `--output-format json` with `--json-schema`: machine-parseable findings for automated inline PR comments.
+- CLAUDE.md as the context mechanism for CI-invoked Claude Code: testing standards, fixture conventions, review criteria — better test generation, less low-value output.
+- Session context isolation: the session that generated code is worse at reviewing it than an independent instance (it inherits its own reasoning). Use a fresh instance for review.
+- Re-running reviews after new commits: include prior findings, instruct "report only new or still-unaddressed issues".
+- Provide existing test files so test generation doesn't duplicate covered scenarios.
+- Iterative refinement: 2–3 concrete input/output examples beat prose when descriptions are interpreted inconsistently; test-driven iteration (write the suite, share the failures); the interview pattern (have Claude ask questions to surface considerations first); interacting fixes in ONE message, independent fixes sequentially.
+- Prompt caching exists and saves input cost — that one sentence is all the exam needs.
 
-**Friction zones:** Putting volatile content (user message) above stable content (system prompt). Setting too many breakpoints. Not measuring actual cache hit rate.
+**Friction zones:** Pipelines without `-p`. Self-review by the generating session. Duplicate review comments on every push. "Be more careful" instead of two examples.
 
-**Analogy seed:** Barista example from earlier. The stable part — your usual order — is what gets memorized. The variable part — "extra hot today" — stays per-order.
+**Analogy seed:** `-p` is mailing written instructions vs phoning someone who must pick up. Independent review is a fresh reader marking up your essay — you can't proofread what you just wrote.
 
 ---
 
-### Hour 19 — Prompt Engineering Optimization for Production
+### Hour 19 — Prompt Engineering: Explicit Criteria & Few-Shot
 
-**Objectives:** Apply few-shot, chain-of-thought, and prompt chaining where appropriate. Know when each helps.
+**Objectives:** Replace vague instructions with explicit categorical criteria. Deploy few-shot examples where they actually move the needle. Manage false positives as a trust budget.
 
 **Topics:**
-- Few-shot prompting: when 2 examples beats 1 instruction.
-- Chain-of-thought: explicit step-by-step vs trusting extended thinking.
-- Prompt chaining: fixed sequence vs adaptive decomposition.
-- Measuring and iterating on prompts in production.
-- Common smell: a 2000-word system prompt that could be 200 with two good examples.
+- Explicit criteria beat vague instructions: "flag comments only when claimed behavior contradicts actual code behavior", not "check that comments are accurate".
+- Why "be conservative" / "only report high-confidence findings" do NOT improve precision — specific categorical criteria do.
+- False positives spend trust: one noisy category undermines confidence in the accurate ones. Temporarily disable a high-FP category while you fix its prompt.
+- Severity definitions with a concrete code example per level → consistent classification.
+- Few-shot: the most effective technique for consistent format and ambiguous-case handling. 2–4 targeted examples showing *why* one action beat the plausible alternative; examples demonstrating the desired output shape (location, issue, severity, suggested fix); examples that distinguish acceptable patterns from genuine issues; varied-format extraction examples to stop empty/null extractions.
+- `detected_pattern` fields in structured findings → systematic analysis of what developers dismiss.
+- Few-shot generalizes to novel patterns; it is not a lookup table of pre-approved cases.
 
-**Friction zones:** Adding more rules instead of adding examples. CoT prompts when extended thinking would do better. Treating prompts as write-once.
+**Friction zones:** Adding more rules instead of two good examples. Confidence-based filtering instead of categorical criteria. Treating the prompt as write-once.
 
-**Analogy seed:** Teaching by example beats teaching by manual every time. "Make me a sandwich like this one" works; "Section 4.2.1: bread orientation rules" doesn't.
+**Analogy seed:** "No parking 4–6pm weekdays" gets compliance; "park considerately" gets opinions. Teaching by worked example beats the policy manual every time.
 
 ---
 
