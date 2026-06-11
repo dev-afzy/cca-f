@@ -197,7 +197,7 @@ export const QUESTION_SEED: QuestionSeed[] = [
     },
     correctKey: "B",
     distractorReasons: {
-      A: "A pasted summary is lossy — it isn't the preserved context; `--resume` restores the actual session state.",
+      A: "A loses the exact accumulated context this scenario requires preserving — prefer fresh + summary only when prior tool results are stale, which is not the case here.",
       B: "Correct. `--resume` continues a prior session with its context intact, and a named session gives you the stable identifier to find and resume it.",
       C: "`fork_session` is for branching parallel exploration without polluting the main line — not for resuming the same work where it stopped.",
       D: "Re-running from the start discards 40 calls of progress and wastes cost; the goal is to continue, not restart.",
@@ -338,6 +338,164 @@ export const QUESTION_SEED: QuestionSeed[] = [
       B: "Even a perfect anger detector misroutes, because the two failing cases prove sentiment doesn't track what actually needs a human.",
       C: "Correct. Sentiment does not equal complexity or risk — route on complexity/risk signals. The calm-but-complex and angry-but-trivial cases show why sentiment misroutes.",
       D: "More prompt examples still optimize for the wrong signal (sentiment) instead of complexity/risk.",
+    },
+  },
+
+  // ─── Domain 3: Claude Code Configuration & Workflows ────────────────────────
+  {
+    slug: "claude-md-path-rules",
+    conceptSlug: "claude-md-rules",
+    domain: "Claude Code",
+    stem: "Your codebase has distinct conventions per area: React components use hooks, API handlers use async/await with specific error handling, and DB models follow a repository pattern. Test files live beside the code they test (e.g. `Button.test.tsx` next to `Button.tsx`) all over the tree, and every test must follow the same conventions regardless of location. What's the most maintainable way to make Claude apply the right conventions automatically?",
+    options: {
+      A: "Create rule files in `.claude/rules/` with YAML frontmatter `paths` glob patterns so conventions load conditionally by file path",
+      B: "Consolidate every convention into the root CLAUDE.md under per-area headers and rely on Claude to infer which section applies",
+      C: "Create one skill per code area in `.claude/skills/`, each carrying that area's conventions in its SKILL.md body",
+      D: "Place a separate CLAUDE.md in each subdirectory containing that directory's specific conventions",
+    },
+    correctKey: "A",
+    distractorReasons: {
+      A: "Correct. Path-scoped rules (`paths: [\"**/*.test.tsx\"]`) apply conventions by file pattern regardless of directory — exactly what spread-out test files need.",
+      B: "Relying on inference from headers is unreliable; nothing guarantees the right section is applied to the right file.",
+      C: "Skills are invoked on demand for workflows — they aren't deterministically loaded by file path, so 'automatic' application isn't guaranteed.",
+      D: "Directory-bound CLAUDE.md files can't follow a convention that cuts across many directories; you'd duplicate the test rules everywhere.",
+    },
+  },
+  {
+    slug: "plan-mode-vs-direct",
+    conceptSlug: "skills-commands-planmode",
+    domain: "Claude Code",
+    stem: "You've been assigned to restructure a monolithic application into microservices — changes across dozens of files plus decisions about service boundaries and module dependencies. Which approach should you take in Claude Code?",
+    options: {
+      A: "Enter plan mode to explore the codebase, understand dependencies, and design the approach before making any changes",
+      B: "Start in direct execution and make changes incrementally, letting the implementation reveal the natural service boundaries",
+      C: "Use direct execution with comprehensive upfront instructions describing exactly how every service should be structured",
+      D: "Begin in direct execution and switch to plan mode only if you hit unexpected complexity during implementation",
+    },
+    correctKey: "A",
+    distractorReasons: {
+      A: "Correct. Plan mode is built for large-scale, multi-file, architectural work — safe exploration and design before committing to changes.",
+      B: "Discovering dependencies mid-rewrite is how you buy expensive rework; the boundaries should be designed, not stumbled into.",
+      C: "Comprehensive upfront instructions assume you already know the right structure — without exploring the code, you don't.",
+      D: "The complexity is already stated in the task (architecture, dozens of files); deferring plan mode ignores what you know now.",
+    },
+  },
+  {
+    slug: "cicd-print-flag",
+    conceptSlug: "cicd-refinement",
+    domain: "Claude Code",
+    stem: "Your CI script runs `claude \"Review this pull request for security issues\"` but the job hangs indefinitely — logs show Claude Code waiting for interactive input. What's the correct fix for automated pipelines?",
+    options: {
+      A: "Add the `-p` (print) flag: `claude -p \"Review this pull request for security issues\"`",
+      B: "Set `CLAUDE_HEADLESS=true` in the pipeline environment before invoking the command",
+      C: "Redirect stdin from /dev/null so the process can't block on input: `claude \"...\" < /dev/null`",
+      D: "Add the `--batch` flag so Claude Code queues the prompt and exits when processing completes",
+    },
+    correctKey: "A",
+    distractorReasons: {
+      A: "Correct. `-p` / `--print` is the documented non-interactive mode: process the prompt, write to stdout, exit — what CI requires.",
+      B: "There is no `CLAUDE_HEADLESS` environment variable; this feature doesn't exist.",
+      C: "A Unix workaround that doesn't engage Claude Code's actual non-interactive mode; behavior remains undefined.",
+      D: "There is no `--batch` flag in the Claude Code CLI.",
+    },
+  },
+  // ─── Domain 4: Batch processing ──────────────────────────────────────────────
+  {
+    slug: "batch-api-latency-fit",
+    conceptSlug: "batch-extraction-quality",
+    domain: "Prompts",
+    stem: "Real-time Claude calls currently power two workflows: (1) a blocking pre-merge check developers wait on, and (2) a technical-debt report generated overnight. Your manager proposes moving both to the Message Batches API for its 50% cost savings. How should you evaluate this?",
+    options: {
+      A: "Move only the overnight report to batch processing; keep the pre-merge check on the synchronous API",
+      B: "Move both to batch with status polling, since batches usually finish much faster than the 24-hour ceiling",
+      C: "Keep both on real-time calls because batch results come back unordered and can't be matched to requests",
+      D: "Move both to batch with a timeout that falls back to a real-time call whenever a batch runs long",
+    },
+    correctKey: "A",
+    distractorReasons: {
+      A: "Correct. Batch trades latency (up to 24h, no SLA) for 50% savings — ideal for overnight reports, unacceptable for a check developers block on.",
+      B: "'Usually faster' is not a guarantee; a blocking workflow can't rest on a no-SLA processing window.",
+      C: "A misconception — batch responses correlate to requests via `custom_id`; ordering is a non-issue.",
+      D: "Needless complexity that still makes developers wait out the timeout; the clean fix is matching each workflow to the right API.",
+    },
+  },
+  // ─── Domain 2: Structured errors ─────────────────────────────────────────────
+  {
+    slug: "structured-error-taxonomy",
+    conceptSlug: "tool-interface-errors",
+    domain: "Tool & MCP",
+    stem: "Every tool on your MCP server returns the string \"Operation failed.\" on any failure — timeouts, invalid input, and policy violations alike. The agent retries policy-violation failures in a loop and gives up immediately on transient timeouts. What change most effectively fixes this behavior?",
+    options: {
+      A: "Return structured error metadata: an `errorCategory` (transient/validation/business/permission), an `isRetryable` boolean, and a human-readable description",
+      B: "Add a system prompt instruction telling the agent to think carefully about whether each failure is worth retrying",
+      C: "Set a global cap of three retries per tool so the policy-violation loop can never run more than three times",
+      D: "Switch the agent to a more capable model that can infer the likely failure cause from surrounding context",
+    },
+    correctKey: "A",
+    distractorReasons: {
+      A: "Correct. The agent can only make good recovery decisions from structured error context — category and retryability tell it to retry timeouts and stop on policy violations.",
+      B: "The agent has no signal to reason over — every failure looks identical; instruction quality can't fix missing information.",
+      C: "A cap bounds the damage but fixes neither the wasted retries on business errors nor the premature give-up on transient ones.",
+      D: "No model can reliably infer error class from a string that carries no class information.",
+    },
+  },
+  // ─── Domain 5: Provenance ────────────────────────────────────────────────────
+  {
+    slug: "provenance-conflicting-sources",
+    conceptSlug: "error-propagation-provenance",
+    domain: "Context",
+    stem: "Your research system's document-analysis subagent finds two credible industry reports stating different market sizes — one collected data in 2023, the other in 2025. The synthesis agent currently picks the larger figure and drops the other. What should happen instead?",
+    options: {
+      A: "Include both figures, each annotated with source attribution and data-collection date, and let the report distinguish them rather than silently choosing",
+      B: "Use the more recent figure and discard the older one, since fresher data supersedes stale data",
+      C: "Average the two figures so the report presents a single number that reflects both sources",
+      D: "Send the search subagent back out repeatedly until it finds a third source that breaks the tie",
+    },
+    correctKey: "A",
+    distractorReasons: {
+      A: "Correct. Conflicting credible values get annotated with attribution and dates — temporal differences are context, not contradictions, and the reader needs both.",
+      B: "Recency alone doesn't invalidate the earlier figure (different methodology/scope may explain it); silently discarding loses provenance.",
+      C: "An average is a number neither source reported — it fabricates a statistic and destroys attribution.",
+      D: "A third source doesn't resolve a difference that may be methodological or temporal; it delays the report and may still conflict.",
+    },
+  },
+  // ─── Proportionality pair: prompt-level fixes that ARE correct ───────────────
+  {
+    slug: "tool-selection-descriptions-first",
+    conceptSlug: "tool-interface-errors",
+    domain: "Tool & MCP",
+    stem: "Production logs show your agent frequently calls `get_customer` when users ask about orders (\"check my order #12345\") instead of `lookup_order`. Both tools have one-line descriptions (\"Retrieves customer information\" / \"Retrieves order details\") and accept similar identifier formats. What's the most effective FIRST step?",
+    options: {
+      A: "Add 5–8 few-shot examples to the system prompt demonstrating order queries routing to `lookup_order`",
+      B: "Expand each tool's description to cover input formats, example queries, edge cases, and when to use it versus the similar tool",
+      C: "Build a routing layer that parses user input each turn and pre-selects the appropriate tool from detected keywords",
+      D: "Consolidate both into a single `lookup_entity` tool that accepts any identifier and picks the backend internally",
+    },
+    correctKey: "B",
+    distractorReasons: {
+      A: "Few-shot adds token overhead while leaving the root cause — undifferentiated descriptions — in place.",
+      B: "Correct. Descriptions are the primary tool-selection mechanism; enriching them is the low-effort, high-leverage fix that addresses the root cause. Note: the structural options (C, D) are the over-engineered distractors here.",
+      C: "Over-engineered — it bypasses the model's language understanding and adds a brittle keyword layer before simpler fixes were tried.",
+      D: "A real architectural option, but far more effort than a first step warrants when the immediate defect is description quality.",
+    },
+  },
+  {
+    slug: "escalation-criteria-prompt-first",
+    conceptSlug: "guardrails",
+    domain: "Agentic",
+    stem: "Your support agent hits 55% first-contact resolution against an 80% target. Logs show it escalates straightforward cases (standard damage replacements with photo evidence) while attempting complex policy-exception cases itself. What most effectively improves its escalation calibration?",
+    options: {
+      A: "Add explicit escalation criteria to the system prompt with few-shot examples showing when to escalate versus resolve autonomously",
+      B: "Have the agent self-report a confidence score before each response and auto-route to humans below a threshold",
+      C: "Train a separate classifier on historical tickets to predict which requests need escalation before the agent runs",
+      D: "Add sentiment analysis and escalate automatically whenever customer frustration crosses a threshold",
+    },
+    correctKey: "A",
+    distractorReasons: {
+      A: "Correct. The root cause is unclear decision boundaries — explicit criteria plus few-shot examples is the proportionate fix. This is criteria definition, not prompt-as-enforcement: nothing here needs a deterministic guarantee, it needs better judgment.",
+      B: "Self-reported confidence is poorly calibrated — this agent is already confidently wrong on the hard cases.",
+      C: "Over-engineered: labeled data and ML infrastructure before prompt-level criteria have even been tried.",
+      D: "Sentiment doesn't track case complexity — calm customers bring hard problems and angry ones bring trivial ones.",
     },
   },
 ];
