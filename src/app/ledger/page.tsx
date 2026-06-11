@@ -74,9 +74,9 @@ export default async function LedgerPage() {
   const crossMasteries = student.masteries.filter((m) => m.concept.week === 0);
 
   const masteryGroups = [
-    { label: "Week 1 — API foundations", rows: week1Masteries },
-    { label: "Week 2 — MCP & agentic patterns", rows: week2Masteries },
-    { label: "Week 3 — Enterprise & security", rows: week3Masteries },
+    { label: "Week 1 — API foundations & extraction quality", rows: week1Masteries },
+    { label: "Week 2 — MCP, tools & agentic patterns", rows: week2Masteries },
+    { label: "Week 3 — Claude Code & production workflows", rows: week3Masteries },
     { label: "Week 4 — Agentic deep-dive & exam sim", rows: week4Masteries },
     { label: "Cross-cutting", rows: crossMasteries },
   ];

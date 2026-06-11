@@ -219,7 +219,7 @@ A good question will use at least two of these as distractors.
 
 ## Mini-Mock — Week 1 (Hour 7)
 
-10 questions, ~15 minutes, covering: model selection, context window, token economics, structured outputs, tool calling mechanics, tool-choice control.
+10 questions, ~15 minutes, covering: model selection & distractor literacy, context window management, batch processing & extraction quality, structured outputs, tool calling mechanics & patterns.
 
 When generating live, target this mix:
 - 1 on model selection / distractor literacy
