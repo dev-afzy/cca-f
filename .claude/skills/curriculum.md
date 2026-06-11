@@ -399,7 +399,7 @@ The instructor (you) generates the actual teaching content live, using the Child
 - The resume-vs-fresh decision the exam tests directly: `--resume` when prior context is mostly valid; start FRESH with an injected structured summary when prior tool results are stale — resuming with stale tool results is worse than a clean summary.
 - When resuming after code changed, tell the agent exactly which files changed for targeted re-analysis instead of full re-exploration.
 
-**Friction zones:** Restarting work from scratch instead of `--resume`. Confusing `fork_session` (branch exploration) with `--resume` (continue the same line). Ignoring stale context in extended sessions. Forcing a static prompt chain onto a task that needs to adapt.
+**Friction zones:** Restarting work from scratch *habitually* instead of `--resume` — but also resuming blindly when tool results are stale and a clean summary would be more reliable. Confusing `fork_session` (branch exploration) with `--resume` (continue the same line). Ignoring stale context in extended sessions. Forcing a static prompt chain onto a task that needs to adapt.
 
 **Analogy seed:** `--resume` is reopening a saved game exactly where you stopped; `fork_session` is a "what-if" save slot you can abandon; a named session is the labeled save file you can find later. Stale context is trusting a map that was redrawn an hour ago.
 
