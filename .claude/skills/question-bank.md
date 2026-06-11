@@ -102,6 +102,39 @@ A good question will use at least two of these as distractors.
 >
 > **Correct: C.** Attention dilution across 200 files is the problem; orchestrator-worker decomposition fixes it structurally. A and B throw resources at a structural problem. D is prompt-as-fix for an architecture issue.
 
+### Multi-Agent Orchestration (Hub & Spoke)
+
+> *Scenario:* A coordinator must fan out 6 independent summarization jobs as isolated subagents that run concurrently. Its `allowedTools` is `['Read', 'Grep']` and you emit the jobs as six sequential turns; subagents never spawn and everything runs in one context. Which fix is correct?
+>
+> A) Add `'Task'` to `allowedTools` and emit six `Task` calls in a single response so they run in parallel
+> B) Increase `max_tokens` so the coordinator has room to spawn subagents
+> C) Lower temperature so the coordinator deterministically delegates
+> D) Pass all six docs in one prompt and summarize each in turn
+>
+> **Correct: A.** Subagent spawning needs the `Task` tool; multiple `Task` calls in one response is what runs them in parallel. B/C are unrelated knobs. D collapses back to the single-context dilution you're avoiding. Companion distractor: forwarding the coordinator's *entire* history to a subagent (context pollution) — pass only explicit, scoped context.
+
+### Session Management & Workflows
+
+> *Scenario:* A migration agent crashed after 40 tool calls. You want to continue tomorrow with the exact accumulated context, and track each migration under a stable identifier. What's correct?
+>
+> A) Start fresh and paste a summary into the system prompt
+> B) Use `--resume` to continue the existing *named* session with its preserved context
+> C) Use `fork_session` to branch a new exploration from scratch
+> D) Raise the iteration cap and re-run from the beginning
+>
+> **Correct: B.** `--resume` continues a prior session with context intact; a named session makes it findable. A is lossy, C is for branching exploration (not resuming the same line), D throws away progress. Related traps: ignoring **stale context** in long sessions (re-ground current state), and forcing a static prompt chain onto a task that needs dynamic adaptive decomposition.
+
+### Hooks & Escalation Signals
+
+> *Scenario:* A support agent should escalate hard tickets. A proposal escalates when the model's self-reported confidence < 0.6, but it reports 0.9 on tickets it answers wrong and 0.4 on ones it handles fine. Sound trigger?
+>
+> A) Recalibrate the self-reported threshold to 0.75
+> B) Escalate on deterministic, observable signals (hard-limit hook, repeated failed attempts, policy-matched category)
+> C) Average two self-reported confidence scores
+> D) Add "be honest about your confidence" to the system prompt
+>
+> **Correct: B.** Self-reported confidence is unreliable and doesn't track correctness — no threshold fixes that. Sentiment is also a poor proxy (anger ≠ complexity). Escalate on complexity/risk signals. Related: use a `PostToolUse` hook for deterministic data normalization (e.g., phone numbers → E.164) — not a system-prompt instruction, and not `PreToolUse` (output doesn't exist yet).
+
 ---
 
 ## Mini-Mock — Week 1 (Hour 7)
@@ -133,7 +166,7 @@ Target mix:
 
 ---
 
-## Full Mock 1 (Hour 20)
+## Full Mock 1 (Hour 22)
 
 60 questions, 120 minutes, timed. Match the actual exam's domain weights:
 
@@ -151,7 +184,7 @@ Note: the user's attached curriculum is light on Claude Code Configuration conte
 
 ---
 
-## Full Mock 2 (Hour 21)
+## Full Mock 2 (Hour 23)
 
 Same shape as Mock 1, different questions. Trajectory matters: improvement on Mock 1's weakest domain is the success signal.
 

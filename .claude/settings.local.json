@@ -1,7 +1,30 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx create-next-app@latest *)"
+      "Bash(npx create-next-app@latest *)",
+      "Bash(npm i *)",
+      "Bash(npx prisma *)",
+      "Bash(npm run *)",
+      "Bash(npx tsx *)",
+      "Bash(curl *)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(awk '{print $2}')",
+      "Skill(debugging:debugging)",
+      "Bash(npx tsc *)",
+      "Bash(sqlite3 /Users/afeesudheenp/.cca-f-tutor/cca-f.db \"SELECT currentHour, sprintStartDate, targetExamDate FROM Student WHERE id='default';\")",
+      "Bash(sqlite3 /Users/afeesudheenp/.cca-f-tutor/cca-f.db \"SELECT id, hour, startedAt, endedAt FROM Session ORDER BY hour;\")",
+      "Bash(node --version && which node && ls ~/.nvm/versions/node/ 2>/dev/null)",
+      "Bash(sqlite3 ~/.cca-f-tutor/cca-f.db \"SELECT id, currentHour, sprintStartDate, targetExamDate FROM Student WHERE id='default';\")",
+      "WebFetch(domain:claudecertifications.com)",
+      "Bash(cd /Users/afeesudheenp/Documents/cca-f *)",
+      "Bash(python3 -)",
+      "Bash(python3 -m pip install --quiet --user pypdf)",
+      "Bash(python3 -c \"import pypdf; print\\('ok', pypdf.__version__\\)\")",
+      "Bash(python3 - *)",
+      "Bash(awk '/\\\\[PAGE 17\\\\]/,EOF' /tmp/exam_guide_clean.txt)",
+      "Bash(git checkout *)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'chore: baseline app state before exam-guide alignment *)"
     ]
   }
 }

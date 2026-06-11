@@ -1,0 +1,173 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Student {
+  id                String   @id @default("default")
+  name              String   @default("")
+  preferredAddress  String   @default("")
+  background        String   @default("")
+  prerequisites     String   @default("Agent Skills | Claude API | MCP | Claude Code")
+  timezone          String   @default("")
+  preferredStyle    String   @default("[]")
+  currentHour       Int      @default(0)
+  sprintStartDate   DateTime
+  targetExamDate    DateTime
+  ledgerPath        String   @default("~/.cca-f-tutor/student-ledger.md")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  masteries         ConceptMastery[]
+  sessions          Session[]
+  frictionPoints    FrictionPoint[]
+  misconceptions    Misconception[]
+  strongAreas       StrongArea[]
+  attempts          QuestionAttempt[]
+  sprintNotes       SprintNote[]
+}
+
+model Concept {
+  id          Int      @id @default(autoincrement())
+  slug        String   @unique
+  name        String
+  week        Int
+  domain      String
+  sortOrder   Int      @default(0)
+  masteries       ConceptMastery[]
+  frictionPoints  FrictionPoint[]
+  strongAreas     StrongArea[]
+  questions       Question[]
+}
+
+model ConceptMastery {
+  id          Int      @id @default(autoincrement())
+  studentId   String
+  conceptId   Int
+  mastery     Int      @default(0)
+  lastTouched DateTime?
+  updatedAt   DateTime @updatedAt
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  concept     Concept  @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  @@unique([studentId, conceptId])
+}
+
+model Session {
+  id          Int      @id @default(autoincrement())
+  studentId   String
+  hour        Int
+  topic       String
+  outcome     String   @default("")
+  startedAt   DateTime @default(now())
+  endedAt     DateTime?
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  messages    SessionMessage[]
+  frictionPoints FrictionPoint[]
+  attempts    QuestionAttempt[]
+  fetches     QuestionFetch[]
+  @@index([studentId, hour])
+}
+
+model SessionMessage {
+  id          Int      @id @default(autoincrement())
+  sessionId   Int
+  role        String
+  content     String
+  createdAt   DateTime @default(now())
+  session     Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  @@index([sessionId, createdAt])
+}
+
+model FrictionPoint {
+  id          Int      @id @default(autoincrement())
+  studentId   String
+  conceptId   Int?
+  sessionId   Int?
+  hour        Int
+  description String
+  styleNote   String   @default("")
+  resolved    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  concept     Concept? @relation(fields: [conceptId], references: [id], onDelete: SetNull)
+  session     Session? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+}
+
+model Misconception {
+  id          Int      @id @default(autoincrement())
+  studentId   String
+  belief      String
+  openedAt    DateTime @default(now())
+  resolvedAt  DateTime?
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model StrongArea {
+  id          Int      @id @default(autoincrement())
+  studentId   String
+  conceptId   Int
+  promotedAt  DateTime @default(now())
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  concept     Concept  @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  @@unique([studentId, conceptId])
+}
+
+model Question {
+  id                Int      @id @default(autoincrement())
+  slug              String   @unique
+  conceptId         Int?
+  domain            String
+  stem              String
+  options           String
+  correctKey        String
+  distractorReasons String
+  source            String   @default("hand-authored")
+  createdAt         DateTime @default(now())
+  concept           Concept? @relation(fields: [conceptId], references: [id], onDelete: SetNull)
+  attempts          QuestionAttempt[]
+  fetches           QuestionFetch[]
+}
+
+// Records the A/B/C/D permutation applied each time fetch_question runs so
+// record_attempt can translate the student's shuffled-key answer back to the
+// canonical letter for grading. One row per fetch; record_attempt uses the
+// latest row for (sessionId, questionId).
+model QuestionFetch {
+  id          Int      @id @default(autoincrement())
+  sessionId   Int
+  questionId  Int
+  // JSON object mapping shuffled letter -> canonical letter, e.g.:
+  //   {"A":"C","B":"A","C":"D","D":"B"}
+  // Read as: the student saw position A, which is canonical option C.
+  permutation String
+  createdAt   DateTime @default(now())
+  session     Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  @@index([sessionId, questionId, createdAt])
+}
+
+model QuestionAttempt {
+  id          Int      @id @default(autoincrement())
+  studentId   String
+  questionId  Int
+  sessionId   Int?
+  hour        Int
+  chosenKey   String
+  correct     Boolean
+  reasoning   String   @default("")
+  createdAt   DateTime @default(now())
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  session     Session? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  @@index([studentId, hour])
+}
+
+model SprintNote {
+  id          Int      @id @default(autoincrement())
+  studentId   String
+  body        String
+  createdAt   DateTime @default(now())
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}

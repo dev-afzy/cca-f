@@ -1,6 +1,6 @@
-# Curriculum — 21 Hours, 3 Weeks
+# Curriculum — 23 Hours, 4 Weeks
 
-Structure follows the attached blueprint: Week 1 patches API foundations, Week 2 goes deep on MCP and agents, Week 3 covers enterprise concerns and runs the mocks.
+Structure follows the attached blueprint: Week 1 patches API foundations, Week 2 goes deep on MCP and agents, Week 3 covers enterprise concerns, and Week 4 closes the Agentic Architecture deep-dive (multi-agent orchestration, session management) before running the mocks.
 
 Each hour gives:
 - **Objectives** (what the student should be able to do at the end)
@@ -236,7 +236,7 @@ The instructor (you) generates the actual teaching content live, using the Child
 
 ---
 
-## Week 3 — Enterprise Architecture, Security & Exam Simulation (Hours 15–21)
+## Week 3 — Enterprise Architecture & Security (Hours 15–19)
 
 ### Hour 15 — Data Privacy & PII Handling
 
@@ -321,7 +321,44 @@ The instructor (you) generates the actual teaching content live, using the Child
 
 ---
 
-### Hour 20 — Full Mock Exam #1 + Remediation
+## Week 4 — Agentic Architecture Deep-Dive & Exam Simulation (Hours 20–23)
+
+### Hour 20 — Multi-Agent Orchestration (Hub & Spoke)
+
+**Objectives:** Design a hub-and-spoke multi-agent system. Spawn isolated subagents correctly and run them in parallel. Manage the context boundary between coordinator and subagents.
+
+**Topics:**
+- Hub-and-spoke: a central coordinator delegates scoped subtasks to specialized subagents.
+- Spawning subagents with the **Task** tool — `allowedTools` must include `'Task'` or no subagent ever spawns.
+- Parallel execution: emit multiple `Task` calls in a single assistant response to run subagents concurrently.
+- Context isolation: subagents have their own context and do not share state directly — a feature, not a bug.
+- Passing explicit, scoped context to each subagent vs. dumping the coordinator's full history (context pollution).
+- `fork_session` for isolated parallel exploration without polluting the main context.
+
+**Friction zones:** Forgetting `'Task'` in `allowedTools`. Forwarding the coordinator's entire history to every subagent (slow, costly, off-topic). Assuming subagents can see each other's outputs. Overly narrow decomposition that leaves coverage gaps between subagents.
+
+**Analogy seed:** A newsroom editor (coordinator) hands each reporter (subagent) one scoped assignment plus just the background that story needs — not the entire newsroom's notes. Reporters work in parallel and file independently; the editor assembles the issue.
+
+---
+
+### Hour 21 — Session Management & Workflows
+
+**Objectives:** Resume, fork, and name sessions deliberately. Detect and mitigate stale context. Choose prompt chaining vs. dynamic adaptive decomposition based on task predictability.
+
+**Topics:**
+- `--resume` to continue a previous session with its preserved context (not a pasted summary).
+- `fork_session` to branch for exploration without polluting the main line.
+- Named sessions for organized, findable multi-session workflows.
+- Stale context: long-running sessions accumulate superseded facts; detect drift and re-ground current state (compaction / fresh read) instead of trusting the model to notice.
+- Prompt chaining (fixed, predictable steps) vs. dynamic adaptive decomposition (next step depends on findings).
+
+**Friction zones:** Restarting work from scratch instead of `--resume`. Confusing `fork_session` (branch exploration) with `--resume` (continue the same line). Ignoring stale context in extended sessions. Forcing a static prompt chain onto a task that needs to adapt.
+
+**Analogy seed:** `--resume` is reopening a saved game exactly where you stopped; `fork_session` is a "what-if" save slot you can abandon; a named session is the labeled save file you can find later. Stale context is trusting a map that was redrawn an hour ago.
+
+---
+
+### Hour 22 — Full Mock Exam #1 + Remediation
 
 **Objectives:** Take a timed full-length mock. Identify the weakest domain. Targeted remediation.
 
@@ -334,7 +371,7 @@ The instructor (you) generates the actual teaching content live, using the Child
 
 ---
 
-### Hour 21 — Full Mock Exam #2 + Final Review + Exam Strategy
+### Hour 23 — Full Mock Exam #2 + Final Review + Exam Strategy
 
 **Objectives:** Validate exam readiness. Lock in test-day strategy.
 
@@ -350,7 +387,7 @@ The instructor (you) generates the actual teaching content live, using the Child
 
 ## Calibration Rules
 
-Apply after each weekly mini-mock and before the Hour 20 full mock:
+Apply after each weekly mini-mock and before the Hour 22 full mock:
 
 - **Strong area (mastery ≥ 80%):** lean review only. Compress next session by 10 minutes.
 - **Weak area (mastery < 60%):** add a 10-minute warm-up block to the next two sessions targeting this area.

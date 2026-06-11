@@ -13,10 +13,10 @@ The instructor reads this file at the start of every session and treats it as th
 
 ## [Current Session]
 
-- Hour: <N> / 21
-- Week: <1 | 2 | 3>
+- Hour: <N> / 23
+- Week: <1 | 2 | 3 | 4>
 - Sprint start date: <YYYY-MM-DD>
-- Target exam date: <YYYY-MM-DD>          # default: sprint start + 21 days
+- Target exam date: <YYYY-MM-DD>          # default: sprint start + 23 days
 - Days elapsed: <N>
 - Days remaining in sprint: <N>
 - Ledger file path: ~/.cca-f-tutor/student-ledger.md   # update if user chose elsewhere
@@ -62,12 +62,16 @@ Track each concept area as a percentage. Update after every session that touched
 - Agent Pattern: Evaluator-Optimizer: <%>
 - Agentic Loop & Termination (stop_reason): <%>
 
-### Week 3 — Enterprise & exam shape
+### Week 3 — Enterprise & security
 - Data Privacy / PII Handling: <%>
 - Prompt Injection Mitigation: <%>
 - Guardrails (Hooks, Tool Gating): <%>
 - Prompt Caching: <%>
 - Prompt Engineering Optimization: <%>
+
+### Week 4 — Agentic deep-dive & exam sim
+- Multi-Agent Orchestration (Hub & Spoke): <%>
+- Session Management & Workflows: <%>
 
 ### Cross-cutting
 - Error Handling Responsibility: <%>
