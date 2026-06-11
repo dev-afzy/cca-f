@@ -139,19 +139,21 @@ The instructor (you) generates the actual teaching content live, using the Child
 
 ## Week 2 — Advanced MCP & Agentic Workflows (Hours 8–14)
 
-### Hour 8 — MCP Architecture (Transport, Protocol, Lifecycle)
+### Hour 8 — MCP Integration & Configuration
 
-**Objectives:** Diagram the MCP three-layer model. Name what each layer is responsible for.
+**Objectives:** Configure MCP servers at the right scope. Use MCP resources to cut exploratory tool calls. Select built-in tools (Read/Write/Edit/Bash/Grep/Glob) correctly.
 
 **Topics:**
-- The host / client / server model. Who connects to whom.
-- Transport layer: stdio for local, SSE/HTTP for remote.
-- Protocol layer: JSON-RPC 2.0 messages, request/response/notification.
-- Lifecycle: `initialize` → ready → tool/resource/prompt operations → `shutdown`.
+- The host / client / server model in one diagram — background only. (Transports, JSON-RPC framing, and lifecycle internals are Level-300 material and explicitly NOT on this exam.)
+- Project-scoped `.mcp.json` (version-controlled, shared with the team) vs user-scoped `~/.claude.json` (personal/experimental servers). Both available simultaneously; all configured servers' tools are discovered at connection time.
+- Environment-variable expansion in `.mcp.json` (e.g. `${GITHUB_TOKEN}`) — credentials never committed.
+- MCP resources as content catalogs (issue summaries, documentation hierarchies, DB schemas) so agents see what data exists without exploratory tool calls.
+- Community MCP servers over custom builds for standard integrations (Jira); custom servers reserved for team-specific workflows.
+- Built-in tools: Grep for content search, Glob for path patterns (`**/*.test.tsx`), Read/Write for full files, Edit for unique-anchor modifications — with Read + Write as the fallback when Edit's anchor isn't unique. Explore incrementally: Grep for entry points, then Read to follow imports — not "read everything upfront".
 
-**Friction zones:** Confusing the MCP server with the underlying tool/database. Not knowing which layer the failure happened at when something breaks.
+**Friction zones:** Committing secrets instead of `${VAR}` expansion. Putting a team server in user scope (teammates silently lack it). Building a custom server where a community one exists. Reading the whole repo before searching it.
 
-**Analogy seed:** MCP is plumbing standards. The transport is the pipe material (copper vs PEX), the protocol is the fitting threading (standardized so any pipe connects to any fixture), and the lifecycle is the water-on/water-off ceremony.
+**Analogy seed:** `.mcp.json` vs `~/.claude.json` is the office toolbox vs the multitool on your own keychain — the office one is stocked for everyone, yours travels with you.
 
 ---
 
@@ -171,36 +173,42 @@ The instructor (you) generates the actual teaching content live, using the Child
 
 ---
 
-### Hour 10 — Designing Secure, Stateful Custom Tools
+### Hour 10 — Tool Interface Design & Structured Errors
 
-**Objectives:** Design a tool with proper auth, session handling, idempotency, and error reporting.
+**Objectives:** Write tool descriptions that drive correct selection among similar tools. Design error responses an agent can actually act on.
 
 **Topics:**
-- Authentication patterns (API keys via env vars; OAuth for user-scoped servers; never put credentials in tool descriptions).
-- Session/state: when a tool needs to remember things between calls, where state lives.
-- Idempotency for safe retry.
-- `is_error: true` and how the model uses error text.
-- Tool descriptions: the model reads them like documentation. Vague descriptions = wrong tool calls.
+- Descriptions are the PRIMARY mechanism for tool selection. Include input formats, example queries, edge cases, and explicit boundaries vs similar tools.
+- Fixing misrouting: rename overlapping tools (`analyze_content` → `extract_web_results`), split generic tools into purpose-specific ones (`analyze_document` → `extract_data_points` / `summarize_content` / `verify_claim_against_source`).
+- System-prompt keyword sensitivity can override good descriptions — review prompts for accidental tool associations.
+- The error taxonomy the exam tests: **transient** (timeout, service down) vs **validation** (bad input) vs **business** (policy violation) vs **permission**. The MCP `isError` flag.
+- Structured error metadata: `errorCategory`, `isRetryable` boolean, human-readable description. `retriable: false` + customer-friendly text for business-rule violations.
+- Access failures (need a retry decision) are NOT valid empty results (successful query, no matches) — report them differently.
+- Subagents recover locally from transient failures; they propagate only what they can't resolve, with partial results and what was attempted.
+- (Auth patterns trimmed to one line: credentials live in env vars, never in tool descriptions. OAuth/key-rotation depth is out of exam scope.)
 
-**Friction zones:** Putting secrets in tool descriptions. Stateful tools that crash when called from a forked session. Tool descriptions like "does the thing" — the model has no way to choose correctly.
+**Friction zones:** Descriptions like "does the thing". A uniform "Operation failed" for every error class. Retry storms on business errors. Treating "no matches" as an outage.
 
-**Analogy seed:** A tool description is the label on a kitchen container. "Stuff" doesn't help the chef. "Flour, all-purpose, opened 3 days ago" does.
+**Analogy seed:** A good error is an airline announcement: "delayed 30 minutes, mechanical, rebooking at gate 12" lets you act. "Flight disrupted" does not.
 
 ---
 
-### Hour 11 — Agent Pattern: Router
+### Hour 11 — Error Propagation & Provenance in Multi-Agent Systems
 
-**Objectives:** Recognize the Router pattern. Implement one. Know its failure modes.
+**Objectives:** Design failure flows a coordinator can recover from. Preserve claim-source mappings through synthesis. Handle conflicting and temporal data correctly.
 
 **Topics:**
-- Classify input → route to the appropriate handler/tool/sub-prompt.
-- When a Router is enough (clear, mutually exclusive categories).
-- Failure modes: ambiguous inputs, evolving categories, the "other" bucket.
-- Confidence scoring on the route decision.
+- Structured error context to the coordinator: failure type, attempted query, partial results, potential alternative approaches.
+- The three anti-patterns: silent suppression (returning empty-as-success), generic statuses ("search unavailable"), and terminating the whole workflow on one failure.
+- Coverage annotations in synthesis output: which findings are well-supported vs which topic areas have gaps from unavailable sources.
+- Claim-source mappings (source URL, document name, excerpt) that downstream agents must PRESERVE through summarization — attribution dies in compression unless it's structured.
+- Conflicting statistics from credible sources: annotate both with attribution; never arbitrarily pick one or average them. The coordinator decides reconciliation.
+- Temporal data: require publication/collection dates in structured outputs so a 2023-vs-2025 difference isn't misread as a contradiction.
+- Render content appropriately in synthesis: financial data as tables, news as prose, technical findings as structured lists.
 
-**Friction zones:** Treating every problem as a Router problem. Routing without a fallback. Not measuring router accuracy.
+**Friction zones:** "Search unavailable" hiding everything the coordinator needed. Summarizers stripping attribution. Cherry-picking one of two conflicting figures.
 
-**Analogy seed:** A receptionist deciding which department to forward a call to. Fast, cheap, and right 90% of the time — but only as good as the menu of departments.
+**Analogy seed:** Provenance is evidence chain-of-custody. A lab result without its labeled bag and timestamps is inadmissible — no matter how good the lab work was.
 
 ---
 
@@ -213,8 +221,12 @@ The instructor (you) generates the actual teaching content live, using the Child
 - Hub-and-spoke shape: coordinator has the full picture, workers have isolated context.
 - Why workers don't share each other's context (and why that's a feature).
 - Parallel vs sequential dispatch.
+- Simple classification routing ("which queue does this belong to?") is the degenerate single-level case of this pattern — a coordinator that only routes. (Absorbs the old Router hour.)
+- The coordinator's iterative refinement loop: evaluate synthesis output for gaps → re-delegate targeted queries to search/analysis workers → re-synthesize until coverage is sufficient.
+- Dynamic subagent selection: analyze the query and invoke only the subagents it needs, instead of always running the full pipeline.
+- Structured handoff summaries for human escalation: customer ID, root cause, amounts, recommended action — the human has no access to the transcript.
 
-**Friction zones:** Assuming workers can see each other's outputs. Forgetting to pass context the worker needs (workers don't inherit history automatically). Letting the coordinator try to do everything itself.
+**Friction zones:** Assuming workers can see each other's outputs. Forgetting to pass context the worker needs (workers don't inherit history automatically). Letting the coordinator try to do everything itself. Decomposition so narrow it leaves coverage gaps between workers (the exam's favorite root-cause question). Escalating to a human with no structured handoff.
 
 **Analogy seed:** A general contractor on a build site. They don't lay every brick — they hire specialists, hand each one a scoped job and the info they need, then assemble the work.
 
