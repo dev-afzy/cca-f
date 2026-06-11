@@ -795,7 +795,7 @@ In `src/lib/ledger-render.ts`, replace the `weekGroups` array (currently lines 7
 - [ ] **Step 5: Validate and build**
 
 Run: `npm run validate:content`
-Expected: PASS — 22 concepts, 16 questions. If check 1 fails, a question still references a retired slug; if check 5 fails, a renamed concept's exact name string is missing from state-template.md.
+Expected: PASS — 22 concepts, 17 questions. If check 1 fails, a question still references a retired slug; if check 5 fails, a renamed concept's exact name string is missing from state-template.md.
 Run: `npm run build` — Expected: no type errors.
 
 - [ ] **Step 6: Commit**
@@ -979,7 +979,7 @@ Append before the closing `];` of `QUESTION_SEED`:
 - [ ] **Step 2: Validate and build**
 
 Run: `npm run validate:content`
-Expected: `Content validation passed: 22 concepts, 24 questions, 23 hours.`
+Expected: `Content validation passed: 22 concepts, 25 questions, 23 hours.`
 Run: `npm run build` — Expected: no type errors.
 
 - [ ] **Step 3: Commit**
@@ -1166,7 +1166,7 @@ Run: `npm run db:setup`
 Expected: "Retiring out-of-scope concepts/questions..." then seed logs, ending "Seed complete."
 
 Run: `npx tsx scripts/check-counts.ts`
-Expected: `{ concepts: 22, questions: 24, students: 1, masteries: 22 }`
+Expected: `{ concepts: 22, questions: 25, students: 1, masteries: 22 }`
 
 - [ ] **Step 4: Commit**
 
