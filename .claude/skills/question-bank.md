@@ -23,17 +23,17 @@ Every well-formed CCA-F question has three layers:
 
 When generating questions live, build distractors using these patterns. The exam uses them constantly.
 
-1. **Prompt-as-guardrail.** "Add a sentence to the system prompt saying X." Wrong because prompts are guidance, not enforcement.
+1. **Prompt-as-guardrail.** "Add a sentence to the system prompt saying X." Wrong *when the requirement is deterministic compliance* (enforcement, policy caps, security gates) — prompts are guidance that can drift or be routed around. NOT wrong when the gap is judgment or information; there the prompt-level fix IS correct and the structural option is the over-engineering distractor (see Pattern 7 and the proportionality principle below).
 2. **Parsing text instead of structured fields.** "Check if the response contains 'done'." Wrong because it's brittle.
 3. **Bigger model is always better.** "Switch to Opus." Wrong when the actual fix is structural.
 4. **Increase context window / send more history.** Wrong when the actual fix is compaction or RAG.
 5. **Retry the whole thing.** Wrong when the actual fix is targeted retry on the specific failure path.
-6. **One-shot bigger prompt.** "Add more examples and rules to the system prompt." Wrong when an additional structural component (hook, validator, second pass) is the right answer.
+6. **One-shot bigger prompt.** "Add more examples and rules to the system prompt." Wrong when an additional structural component (hook, validator, second pass) is the right answer. But when the gap IS judgment or information, adding criteria/examples IS the correct answer — and the structural option becomes Pattern 7.
 7. **Over-engineering.** "Build a routing layer / train a classifier / add ML infrastructure." Wrong when explicit criteria, better tool descriptions, or 2–3 few-shot examples fix the root cause at a fraction of the effort.
 
 A good question will use at least two of these as distractors.
 
-**The proportionality principle (read this before writing any question).** "Prompt-as-guardrail" is wrong **only when the requirement is deterministic compliance** (never refund > $500 → hook). When the failure is a *judgment* gap — unclear escalation boundaries, undifferentiated tool descriptions, inconsistent output format — the prompt-level fix (explicit criteria, enriched descriptions, targeted few-shot) IS the correct answer, and the heavy structural option is the over-engineering distractor. The official sample questions test this in both directions: a hook beats a prompt rule for refund compliance, but explicit criteria + few-shot beats a classifier for escalation calibration, and richer tool descriptions beat a routing layer for tool selection. A good mock mixes both directions so the student can't pattern-match "programmatic = correct".
+**The proportionality principle (read this before writing any question).** "Prompt-as-guardrail" is wrong **only when the requirement is deterministic compliance** (never refund > $500 → hook). When the failure is a *judgment* gap — unclear escalation boundaries, undifferentiated tool descriptions, inconsistent output format — the prompt-level fix (explicit criteria, enriched descriptions, targeted few-shot) IS the correct answer, and the heavy structural option is the over-engineering distractor. The official sample questions (v0.1) test this in both directions: a hook beats a prompt rule for refund compliance, but explicit criteria + few-shot beats a classifier for escalation calibration, and richer tool descriptions beat a routing layer for tool selection. A good mock mixes both directions so the student can't pattern-match "programmatic = correct".
 
 ---
 
@@ -81,7 +81,7 @@ A good question will use at least two of these as distractors.
 > C) Add a `PreToolUse` hook on `process_refund` that denies when `amount > 500` and emits a human-review request
 > D) Train a classifier to detect refund requests above $500 in user messages and prepend a warning to the system prompt
 >
-> **Correct: C.** Programmatic interception is enforcement. The other three are all variations of prompt-as-guardrail and can be drifted, jailbroken, or routed around.
+> **Correct: C.** Programmatic interception is enforcement. A and B are prompt-as-guardrail variants that can drift or be routed around. D is over-engineered and still fails enforcement — a classifier that prepends a warning is neither a hook nor a gate, just a guardrail with extra steps.
 
 ### Agent Pattern Choice
 
@@ -92,7 +92,7 @@ A good question will use at least two of these as distractors.
 > C) Decompose into two passes: per-file subagents for local issues + a separate integration pass for cross-file analysis
 > D) Add a longer system prompt with explicit instructions to check both local and cross-file issues
 >
-> **Correct: C.** Attention dilution across 200 files is the problem; orchestrator-worker decomposition fixes it structurally. A and B throw resources at a structural problem. D is prompt-as-fix for an architecture issue.
+> **Correct: C.** Attention dilution across 200 files is the problem; orchestrator-worker decomposition fixes it structurally. A and B throw resources at a structural problem. D is prompt-as-fix for what is fundamentally an architecture/attention problem — contrast with calibration scenarios where explicit criteria in the prompt IS the proportionate answer.
 
 ### Multi-Agent Orchestration (Hub & Spoke)
 
@@ -224,7 +224,7 @@ A good question will use at least two of these as distractors.
 When generating live, target this mix:
 - 1 on model selection / distractor literacy
 - 2 on context window management
-- 2 on batch processing & extraction quality
+- 2 on batch processing & extraction quality (use the Batch Processing Fit exemplar for batch; for extraction quality, generate from Live Guidance — target nullable schema design or enum-other for partial data)
 - 2 on structured outputs (incl. nullable / enum-other schema design)
 - 3 on tool calling mechanics & patterns
 
@@ -242,7 +242,7 @@ Target mix:
 - 1 on skill-vs-tool boundary
 - 2 on agent patterns (Orchestrator-Workers, Evaluator-Optimizer)
 - 2 on agentic loop / stop_reason
-- 1 on error propagation & provenance
+- 1 on error propagation & provenance (the Structured Error Taxonomy exemplar covers single-tool error categories; for multi-agent propagation, generate from Live Guidance)
 
 ---
 
