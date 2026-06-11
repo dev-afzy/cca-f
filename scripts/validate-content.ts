@@ -33,9 +33,12 @@ for (const q of QUESTION_SEED) {
   }
 }
 
-// 3. Concept/question domains are known labels
+// 3. Concept and question domains are known labels
 for (const c of CONCEPT_SEED) {
   if (!(c.domain in DOMAIN_LABELS)) errors.push(`concept "${c.slug}" has unknown domain "${c.domain}"`);
+}
+for (const q of QUESTION_SEED) {
+  if (!(q.domain in DOMAIN_LABELS)) errors.push(`question "${q.slug}" has unknown domain "${q.domain}"`);
 }
 
 // 4. HOUR_TOPICS matches curriculum "### Hour N — Title" headings for hours 1-23
@@ -61,12 +64,18 @@ for (const q of QUESTION_SEED) {
   for (const k of Object.keys(q.options)) {
     if (!(k in q.distractorReasons)) errors.push(`question "${q.slug}" missing distractorReason for ${k}`);
   }
+  for (const k of Object.keys(q.distractorReasons)) {
+    if (!(k in q.options)) errors.push(`question "${q.slug}" has distractorReason for unknown option ${k}`);
+  }
 }
 
 // 7. Unique slugs
 const qSlugs = QUESTION_SEED.map((q) => q.slug);
-if (new Set(qSlugs).size !== qSlugs.length) errors.push("duplicate question slugs");
-if (slugs.size !== CONCEPT_SEED.length) errors.push("duplicate concept slugs");
+const dupeQSlugs = [...new Set(qSlugs.filter((s, i) => qSlugs.indexOf(s) !== i))];
+if (dupeQSlugs.length) errors.push(`duplicate question slugs: ${dupeQSlugs.join(", ")}`);
+const cSlugs = CONCEPT_SEED.map((c) => c.slug);
+const dupeCSlugs = [...new Set(cSlugs.filter((s, i) => cSlugs.indexOf(s) !== i))];
+if (dupeCSlugs.length) errors.push(`duplicate concept slugs: ${dupeCSlugs.join(", ")}`);
 
 if (errors.length) {
   console.error(`Content validation FAILED (${errors.length}):`);
