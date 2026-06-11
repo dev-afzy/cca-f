@@ -311,6 +311,7 @@ The instructor (you) generates the actual teaching content live, using the Child
 - Output filters / classifiers as a final layer.
 - Why programmatic enforcement beats prompt-based "never do X" rules.
 - The exam's favorite distractor: "add a sentence to the system prompt."
+- The distractor is "add a rule to *prevent* an action"; the correct use of the system prompt is "define the *decision criteria*" — preventing vs calibrating are different problems.
 - Escalation design (the other half of this hour): explicit escalation criteria with few-shot examples in the system prompt are the CORRECT, proportionate fix when the agent's decision boundaries are unclear — this is not "prompt-as-guardrail", it's criteria definition.
 - Honor an explicit customer request for a human immediately; acknowledge frustration but offer resolution when the issue is in capability — escalate if they reiterate.
 - Escalate on policy gaps (the policy is silent or ambiguous on this case), not just "hard" cases.
