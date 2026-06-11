@@ -197,7 +197,7 @@ export const QUESTION_SEED: QuestionSeed[] = [
     },
     correctKey: "B",
     distractorReasons: {
-      A: "A loses the exact accumulated context this scenario requires preserving — prefer fresh + summary only when prior tool results are stale, which is not the case here.",
+      A: "Starting fresh loses the exact accumulated context this scenario requires preserving — prefer fresh + summary only when prior tool results are stale, which is not the case here.",
       B: "Correct. `--resume` continues a prior session with its context intact, and a named session gives you the stable identifier to find and resume it.",
       C: "`fork_session` is for branching parallel exploration without polluting the main line — not for resuming the same work where it stopped.",
       D: "Re-running from the start discards 40 calls of progress and wastes cost; the goal is to continue, not restart.",
@@ -474,7 +474,7 @@ export const QUESTION_SEED: QuestionSeed[] = [
     correctKey: "B",
     distractorReasons: {
       A: "Few-shot adds token overhead while leaving the root cause — undifferentiated descriptions — in place.",
-      B: "Correct. Descriptions are the primary tool-selection mechanism; enriching them is the low-effort, high-leverage fix that addresses the root cause. Note: the structural options (C, D) are the over-engineered distractors here.",
+      B: "Correct. Descriptions are the primary tool-selection mechanism; enriching them is the low-effort, high-leverage fix that addresses the root cause. The routing-layer and consolidation options are the over-engineered distractors here.",
       C: "Over-engineered — it bypasses the model's language understanding and adds a brittle keyword layer before simpler fixes were tried.",
       D: "A real architectural option, but far more effort than a first step warrants when the immediate defect is description quality.",
     },
