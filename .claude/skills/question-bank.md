@@ -1,6 +1,6 @@
 # Question Bank — CCA-F-Style Questions
 
-The real CCA-F exam is 60 scenario-based MCQs with one correct answer and three plausible distractors. The hardest part of the exam is *distractor literacy* — wrong answers are designed to look reasonable. This file is your library of patterns and exemplars for building those questions live.
+The real CCA-F exam is multiple-choice: one correct answer and three plausible distractors per question, scenario-based, with questions framed by 4 scenarios drawn at random from 6 published ones (customer support agent, Claude Code codegen, multi-agent research, developer productivity, CI/CD, structured data extraction). Results are a scaled score of 100–1,000 with a **720 pass mark**; unanswered questions score as wrong and there is no guessing penalty. The official guide (v0.1) does **not** state question count or time limit — verify both on the exam portal before exam day; mocks below use 60 questions / 120 minutes as a working assumption only. The hardest part of the exam is *distractor literacy* — wrong answers are designed to look reasonable. This file is your library of patterns and exemplars for building those questions live.
 
 ## Question Anatomy
 
@@ -15,11 +15,11 @@ Every well-formed CCA-F question has three layers:
 > > [Specific failure or design choice].
 > > Which of the following changes most effectively addresses this?
 > > A) [common but wrong pattern that the exam expects you to almost pick]
-> > B) [correct answer — usually a programmatic / structural fix]
+> > B) [correct answer — the PROPORTIONATE fix: prompt-level (criteria, descriptions, examples) when the gap is judgment or information; programmatic (hooks, gates) when compliance must be deterministic]
 > > C) [over-engineered alternative that would also work but is wasteful]
 > > D) [plausible but tangential fix that doesn't actually address the root cause]
 
-## Distractor Design — The Six Common Wrong Patterns
+## Distractor Design — The Seven Common Wrong Patterns
 
 When generating questions live, build distractors using these patterns. The exam uses them constantly.
 
@@ -29,8 +29,11 @@ When generating questions live, build distractors using these patterns. The exam
 4. **Increase context window / send more history.** Wrong when the actual fix is compaction or RAG.
 5. **Retry the whole thing.** Wrong when the actual fix is targeted retry on the specific failure path.
 6. **One-shot bigger prompt.** "Add more examples and rules to the system prompt." Wrong when an additional structural component (hook, validator, second pass) is the right answer.
+7. **Over-engineering.** "Build a routing layer / train a classifier / add ML infrastructure." Wrong when explicit criteria, better tool descriptions, or 2–3 few-shot examples fix the root cause at a fraction of the effort.
 
 A good question will use at least two of these as distractors.
+
+**The proportionality principle (read this before writing any question).** "Prompt-as-guardrail" is wrong **only when the requirement is deterministic compliance** (never refund > $500 → hook). When the failure is a *judgment* gap — unclear escalation boundaries, undifferentiated tool descriptions, inconsistent output format — the prompt-level fix (explicit criteria, enriched descriptions, targeted few-shot) IS the correct answer, and the heavy structural option is the over-engineering distractor. The official sample questions test this in both directions: a hook beats a prompt rule for refund compliance, but explicit criteria + few-shot beats a classifier for escalation calibration, and richer tool descriptions beat a routing layer for tool selection. A good mock mixes both directions so the student can't pattern-match "programmatic = correct".
 
 ---
 
@@ -80,17 +83,6 @@ A good question will use at least two of these as distractors.
 >
 > **Correct: C.** Programmatic interception is enforcement. The other three are all variations of prompt-as-guardrail and can be drifted, jailbroken, or routed around.
 
-### Prompt Caching
-
-> *Scenario:* You're paying $14,000/month in input token costs. Most of your usage is a customer-support agent with a 30K-token policy document at the top of every prompt, followed by a ~500-token conversation history that varies per chat. Which restructure gives the largest savings?
->
-> A) Truncate the policy document to the most-cited 5K tokens
-> B) Keep the structure but enable prompt caching with a `cache_control` breakpoint after the policy document
-> C) Move the policy document to the end of the prompt (recency effect helps cache)
-> D) Switch from Sonnet to Haiku for this workflow
->
-> **Correct: B.** Cache the stable, expensive top of the prompt. The volatile conversation history below it doesn't poison the cache. A hurts answer quality. C reverses the caching rule (stable content goes at the top). D might help cost but breaks no guarantees about quality and isn't a caching answer.
-
 ### Agent Pattern Choice
 
 > *Scenario:* You're building a code-review agent. It must analyze a 200-file PR, flag issues in each file locally, then identify cross-file consistency problems. You're seeing degraded quality when the agent tries to do both in one pass — it misses subtle cross-file issues. Which architectural change most effectively addresses this?
@@ -122,7 +114,7 @@ A good question will use at least two of these as distractors.
 > C) Use `fork_session` to branch a new exploration from scratch
 > D) Raise the iteration cap and re-run from the beginning
 >
-> **Correct: B.** `--resume` continues a prior session with context intact; a named session makes it findable. A is lossy, C is for branching exploration (not resuming the same line), D throws away progress. Related traps: ignoring **stale context** in long sessions (re-ground current state), and forcing a static prompt chain onto a task that needs dynamic adaptive decomposition.
+> **Correct: B.** `--resume` continues a prior session with context intact; a named session makes it findable. A loses the exact accumulated context this scenario requires preserving (prefer fresh + an injected summary only when prior tool results are stale — not the case here), C is for branching exploration (not resuming the same line), D throws away progress. Related traps: ignoring **stale context** in long sessions (re-ground current state), and forcing a static prompt chain onto a task that needs dynamic adaptive decomposition.
 
 ### Hooks & Escalation Signals
 
@@ -135,6 +127,94 @@ A good question will use at least two of these as distractors.
 >
 > **Correct: B.** Self-reported confidence is unreliable and doesn't track correctness — no threshold fixes that. Sentiment is also a poor proxy (anger ≠ complexity). Escalate on complexity/risk signals. Related: use a `PostToolUse` hook for deterministic data normalization (e.g., phone numbers → E.164) — not a system-prompt instruction, and not `PreToolUse` (output doesn't exist yet).
 
+### Claude Code: Path-Scoped Rules
+
+> *Scenario:* Your codebase has distinct conventions per area: React components use hooks, API handlers use async/await with specific error handling, and DB models follow a repository pattern. Test files live beside the code they test (e.g. `Button.test.tsx` next to `Button.tsx`) all over the tree, and every test must follow the same conventions regardless of location. What's the most maintainable way to make Claude apply the right conventions automatically?
+>
+> A) Create rule files in `.claude/rules/` with YAML frontmatter `paths` glob patterns so conventions load conditionally by file path
+> B) Consolidate every convention into the root CLAUDE.md under per-area headers and rely on Claude to infer which section applies
+> C) Create one skill per code area in `.claude/skills/`, each carrying that area's conventions in its SKILL.md body
+> D) Place a separate CLAUDE.md in each subdirectory containing that directory's specific conventions
+>
+> **Correct: A.** Path-scoped rules (`paths: ["**/*.test.tsx"]`) apply conventions by file pattern regardless of directory — exactly what spread-out test files need. B relies on inference from headers, which is unreliable; nothing guarantees the right section is applied to the right file. C uses skills, which are invoked on demand for workflows — they aren't deterministically loaded by file path, so automatic application isn't guaranteed. D uses directory-bound CLAUDE.md files that can't follow a convention cutting across many directories; you'd duplicate the test rules everywhere.
+
+### Claude Code: Plan Mode vs Direct Execution
+
+> *Scenario:* You've been assigned to restructure a monolithic application into microservices — changes across dozens of files plus decisions about service boundaries and module dependencies. Which approach should you take in Claude Code?
+>
+> A) Enter plan mode to explore the codebase, understand dependencies, and design the approach before making any changes
+> B) Start in direct execution and make changes incrementally, letting the implementation reveal the natural service boundaries
+> C) Use direct execution with comprehensive upfront instructions describing exactly how every service should be structured
+> D) Begin in direct execution and switch to plan mode only if you hit unexpected complexity during implementation
+>
+> **Correct: A.** Plan mode is built for large-scale, multi-file, architectural work — safe exploration and design before committing to changes. B discovers dependencies mid-rewrite, which is how you buy expensive rework; the boundaries should be designed, not stumbled into. C assumes you already know the right structure — without exploring the code, you don't. D defers plan mode even though the complexity is already stated in the task (architecture, dozens of files); it ignores what you know now.
+
+### Claude Code: CI/CD Headless Mode
+
+> *Scenario:* Your CI script runs `claude "Review this pull request for security issues"` but the job hangs indefinitely — logs show Claude Code waiting for interactive input. What's the correct fix for automated pipelines?
+>
+> A) Add the `-p` (print) flag: `claude -p "Review this pull request for security issues"`
+> B) Set `CLAUDE_HEADLESS=true` in the pipeline environment before invoking the command
+> C) Redirect stdin from /dev/null so the process can't block on input: `claude "..." < /dev/null`
+> D) Add the `--batch` flag so Claude Code queues the prompt and exits when processing completes
+>
+> **Correct: A.** `-p` / `--print` is the documented non-interactive mode: process the prompt, write to stdout, exit — what CI requires. B is incorrect; there is no `CLAUDE_HEADLESS` environment variable, this feature doesn't exist. C is a Unix workaround that doesn't engage Claude Code's actual non-interactive mode; behavior remains undefined. D is also incorrect; there is no `--batch` flag in the Claude Code CLI.
+
+### Batch Processing Fit
+
+> *Scenario:* Real-time Claude calls currently power two workflows: (1) a blocking pre-merge check developers wait on, and (2) a technical-debt report generated overnight. Your manager proposes moving both to the Message Batches API for its 50% cost savings. How should you evaluate this?
+>
+> A) Move only the overnight report to batch processing; keep the pre-merge check on the synchronous API
+> B) Move both to batch with status polling, since batches usually finish much faster than the 24-hour ceiling
+> C) Keep both on real-time calls because batch results come back unordered and can't be matched to requests
+> D) Move both to batch with a timeout that falls back to a real-time call whenever a batch runs long
+>
+> **Correct: A.** Batch trades latency (up to 24h, no SLA) for 50% savings — ideal for overnight reports, unacceptable for a check developers block on. B is wrong because "usually faster" is not a guarantee; a blocking workflow can't rest on a no-SLA processing window. C is a misconception — batch responses correlate to requests via `custom_id`; ordering is a non-issue. D adds needless complexity that still makes developers wait out the timeout; the clean fix is matching each workflow to the right API.
+
+### Structured Error Taxonomy
+
+> *Scenario:* Every tool on your MCP server returns the string "Operation failed." on any failure — timeouts, invalid input, and policy violations alike. The agent retries policy-violation failures in a loop and gives up immediately on transient timeouts. What change most effectively fixes this behavior?
+>
+> A) Return structured error metadata: an `errorCategory` (transient/validation/business/permission), an `isRetryable` boolean, and a human-readable description
+> B) Add a system prompt instruction telling the agent to think carefully about whether each failure is worth retrying
+> C) Set a global cap of three retries per tool so the policy-violation loop can never run more than three times
+> D) Switch the agent to a more capable model that can infer the likely failure cause from surrounding context
+>
+> **Correct: A.** The agent can only make good recovery decisions from structured error context — category and retryability tell it to retry timeouts and stop on policy violations. B fails because the agent has no signal to reason over; every failure looks identical, and instruction quality can't fix missing information. C bounds the damage but fixes neither the wasted retries on business errors nor the premature give-up on transient ones. D is incorrect; no model can reliably infer error class from a string that carries no class information.
+
+### Provenance & Conflicting Sources
+
+> *Scenario:* Your research system's document-analysis subagent finds two credible industry reports stating different market sizes — one collected data in 2023, the other in 2025. The synthesis agent currently picks the larger figure and drops the other. What should happen instead?
+>
+> A) Include both figures, each annotated with source attribution and data-collection date, and let the report distinguish them rather than silently choosing
+> B) Use the more recent figure and discard the older one, since fresher data supersedes stale data
+> C) Average the two figures so the report presents a single number that reflects both sources
+> D) Send the search subagent back out repeatedly until it finds a third source that breaks the tie
+>
+> **Correct: A.** Conflicting credible values get annotated with attribution and dates — temporal differences are context, not contradictions, and the reader needs both. B is wrong because recency alone doesn't invalidate the earlier figure (different methodology/scope may explain it); silently discarding loses provenance. C fabricates a statistic neither source reported and destroys attribution. D delays the report with a third source that may still conflict and doesn't resolve a difference that may be methodological or temporal.
+
+### Proportionality: Descriptions First
+
+> *Scenario:* Production logs show your agent frequently calls `get_customer` when users ask about orders ("check my order #12345") instead of `lookup_order`. Both tools have one-line descriptions ("Retrieves customer information" / "Retrieves order details") and accept similar identifier formats. What's the most effective FIRST step?
+>
+> A) Add 5–8 few-shot examples to the system prompt demonstrating order queries routing to `lookup_order`
+> B) Expand each tool's description to cover input formats, example queries, edge cases, and when to use it versus the similar tool
+> C) Build a routing layer that parses user input each turn and pre-selects the appropriate tool from detected keywords
+> D) Consolidate both into a single `lookup_entity` tool that accepts any identifier and picks the backend internally
+>
+> **Correct: B.** Descriptions are the primary tool-selection mechanism; enriching them is the low-effort, high-leverage fix that addresses the root cause. A adds token overhead while leaving the root cause — undifferentiated descriptions — in place. C is over-engineered — it bypasses the model's language understanding and adds a brittle keyword layer before simpler fixes were tried. D is a real architectural option, but far more effort than a first step warrants when the immediate defect is description quality. C and D are the over-engineering distractors here.
+
+### Proportionality: Criteria First
+
+> *Scenario:* Your support agent hits 55% first-contact resolution against an 80% target. Logs show it escalates straightforward cases (standard damage replacements with photo evidence) while attempting complex policy-exception cases itself. What most effectively improves its escalation calibration?
+>
+> A) Add explicit escalation criteria to the system prompt with few-shot examples showing when to escalate versus resolve autonomously
+> B) Have the agent self-report a confidence score before each response and auto-route to humans below a threshold
+> C) Train a separate classifier on historical tickets to predict which requests need escalation before the agent runs
+> D) Add sentiment analysis and escalate automatically whenever customer frustration crosses a threshold
+>
+> **Correct: A.** The root cause is unclear decision boundaries — explicit criteria plus few-shot examples is the proportionate fix. This is criteria definition, not prompt-as-enforcement: nothing here needs a deterministic guarantee, it needs better judgment. B is wrong because self-reported confidence is poorly calibrated — this agent is already confidently wrong on the hard cases. C is over-engineered: labeled data and ML infrastructure before prompt-level criteria have even been tried. D relies on sentiment, which doesn't track case complexity — calm customers bring hard problems and angry ones bring trivial ones.
+
 ---
 
 ## Mini-Mock — Week 1 (Hour 7)
@@ -142,11 +222,11 @@ A good question will use at least two of these as distractors.
 10 questions, ~15 minutes, covering: model selection, context window, token economics, structured outputs, tool calling mechanics, tool-choice control.
 
 When generating live, target this mix:
-- 2 on model selection
-- 2 on token / context window / cost
-- 2 on structured outputs
+- 1 on model selection / distractor literacy
+- 2 on context window management
+- 2 on batch processing & extraction quality
+- 2 on structured outputs (incl. nullable / enum-other schema design)
 - 3 on tool calling mechanics & patterns
-- 1 cross-cutting scenario
 
 After scoring: every wrong answer triggers a remediation note in `[Weak Areas]`.
 
@@ -154,21 +234,21 @@ After scoring: every wrong answer triggers a remediation note in `[Weak Areas]`.
 
 ## Mini-Mock — Week 2 (Hour 14)
 
-10 questions, ~15 minutes, covering: MCP architecture, MCP primitives, tool security & state, skill-vs-tool boundary, the three agent patterns, agentic loop termination.
+10 questions, ~15 minutes, covering: MCP integration & configuration, MCP primitives, tool interface design & structured errors, skill-vs-tool boundary, orchestrator-workers, evaluator-optimizer, agentic loop termination, error propagation & provenance.
 
 Target mix:
-- 2 on MCP architecture / primitives
-- 1 on stateful / secure tool design
+- 2 on MCP integration / configuration / primitives
+- 2 on tool interface design & structured errors
 - 1 on skill-vs-tool boundary
-- 3 on agent patterns (one each: Router, Orchestrator-Workers, Evaluator-Optimizer)
+- 2 on agent patterns (Orchestrator-Workers, Evaluator-Optimizer)
 - 2 on agentic loop / stop_reason
-- 1 cross-cutting scenario
+- 1 on error propagation & provenance
 
 ---
 
 ## Full Mock 1 (Hour 22)
 
-60 questions, 120 minutes, timed. Match the actual exam's domain weights:
+60 questions, 120 minutes, timed (our mock format — the real exam's count and duration are unverified; see the note at the top of this file). Match the official domain weights:
 
 | Domain | Questions |
 |---|---|
@@ -180,7 +260,7 @@ Target mix:
 
 Score by domain. Lowest-scoring domain gets the remaining session time for remediation.
 
-Note: the user's attached curriculum is light on Claude Code Configuration content (Week 2 covers MCP and agents but not the `CLAUDE.md` hierarchy, slash commands, hooks-at-CI-boundary, plugins, permissions in depth). Flag this in `[Weak Areas]` if Claude Code domain scores low and consider supplementing.
+Note: Week 3 (Hours 15–19) now carries the Claude Code Configuration domain (CLAUDE.md hierarchy, rules, skills frontmatter, plan mode, CI/CD flags). When generating Claude Code questions, draw on those hours plus the seeded exemplars above — and include at least two proportionality-direction questions (where the prompt-level fix is correct) so the mock can't be gamed by always picking the structural option.
 
 ---
 
@@ -201,8 +281,8 @@ When you need a checkpoint question mid-session and don't want to use an exempla
 2. Pick the *production setting* (use realistic numbers — 100K req/day, 30K-token prompt, $5K/month budget).
 3. State the *specific architectural decision* to make.
 4. Write four options:
-   - One correct (usually structural / programmatic).
-   - One prompt-as-fix distractor.
+   - One correct (the PROPORTIONATE fix — sometimes prompt-level, sometimes programmatic).
+   - One prompt-as-enforcement distractor OR one over-engineering distractor (whichever direction the correct answer is NOT).
    - One bigger-model-is-better OR throw-more-tokens distractor.
    - One plausible but tangential fix.
 5. After the student answers, ask "walk me through your reasoning" before revealing.
