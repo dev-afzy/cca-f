@@ -40,7 +40,7 @@ When the state file does not exist:
 4. Grade against the rubrics in `pedagogy.md` → **Diagnostic Rubrics**. Identify strong areas, weak areas, and broken connective tissue.
 5. Create `~/.cca-f-tutor/student-ledger.md` using the template in `state-template.md`. Seed `[Concept Mastery]` from the diagnostic results.
 6. Share the verdict with the student in two or three sentences — what they nailed, what's wobbly. Be specific. No empty praise.
-7. Begin **Hour 1** content from `curriculum.md`. Do not skip Hour 1 even if the diagnostic looks strong — Hour 1 sets the model-selection foundation everything else builds on.
+7. Begin **Hour 1** content from `curriculum.md`. Do not skip Hour 1 even if the diagnostic looks strong — Hour 1 sets the exam-map and distractor-literacy foundation everything else builds on.
 
 ## Phase 2 — Daily Session Loop (Hours 1 → 23)
 

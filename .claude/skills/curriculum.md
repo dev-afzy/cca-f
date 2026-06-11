@@ -65,7 +65,9 @@ The instructor (you) generates the actual teaching content live, using the Child
 
 **Friction zones:** Putting a blocking workflow on the batch API because "it's usually fast". Retrying an extraction whose data isn't in the document. Trusting aggregate accuracy. Using uncalibrated self-reported confidence for review routing.
 
-**Analogy seed:** Batch vs sync is overnight freight vs a courier — half the price if nobody is standing at the door waiting. Confidence calibration is a bathroom scale you verify against known weights before you trust its readings.
+**Analogy seeds:**
+- Batch vs sync is overnight freight vs a courier — half the price if nobody is standing at the door waiting.
+- Confidence calibration is a bathroom scale you verify against known weights before you trust its readings.
 
 ---
 
@@ -127,7 +129,7 @@ The instructor (you) generates the actual teaching content live, using the Child
 **Objectives:** Synthesize Week 1 into one architectural scenario. Take a 10-question mini-mock. Patch any concept under 70% mastery.
 
 **Topics:**
-- Scenario walkthrough: design the API layer for a customer support bot. Cover model selection, tools, structured outputs, cost.
+- Scenario walkthrough: design the API layer for a customer support bot. Cover model selection, tools, structured outputs, batch vs sync processing, and extraction quality.
 - Mini-mock from `question-bank.md` → **Week 1 Mini-Mock**.
 - Targeted remediation on any concept still scoring below 70%.
 
