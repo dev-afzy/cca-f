@@ -69,7 +69,7 @@ export const QUESTION_SEED: QuestionSeed[] = [
   {
     slug: "guardrails-pretooluse-hook",
     conceptSlug: "guardrails",
-    domain: "Claude Code",
+    domain: "Agentic",
     stem: "Your agent must never process refunds over $500 without human approval. The CTO has reviewed three proposals. Which one ships?",
     options: {
       A: "Add a line to CLAUDE.md instructing the agent never to process refunds over $500 without explicit human approval first",
@@ -83,25 +83,6 @@ export const QUESTION_SEED: QuestionSeed[] = [
       B: "System prompt rules are guidance; they can be overridden by clever user input or model drift.",
       C: "Correct. Programmatic interception is enforcement. The other three are all variations of prompt-as-guardrail.",
       D: "A classifier that modifies the system prompt is still a soft guardrail — it doesn't prevent the action programmatically.",
-    },
-  },
-  {
-    slug: "prompt-caching-breakpoint-placement",
-    conceptSlug: "prompt-caching",
-    domain: "Context",
-    stem: "You're paying $14,000/month in input token costs. Most of your usage is a customer-support agent with a 30K-token policy document at the top of every prompt, followed by a ~500-token conversation history that varies per chat. Which restructure gives the largest savings?",
-    options: {
-      A: "Truncate the 30K-token policy document down to just the most-cited 5K tokens to shrink the per-request input cost",
-      B: "Keep the structure but enable prompt caching with a cache_control breakpoint after the policy document",
-      C: "Move the policy document to the end of the prompt so the recency effect helps the cache hold on to it",
-      D: "Switch this workflow from Sonnet to Haiku so the same volume of input tokens costs noticeably less per chat",
-    },
-    correctKey: "B",
-    distractorReasons: {
-      A: "Truncating the policy document may hurt answer quality and doesn't leverage caching to reduce costs.",
-      B: "Correct. Cache the stable, expensive top of the prompt. The volatile conversation history below it doesn't poison the cache.",
-      C: "This reverses the caching rule — stable content must go at the top so the cache breakpoint covers it.",
-      D: "Switching models might help cost but doesn't guarantee quality and isn't a caching answer to this specific problem.",
     },
   },
   {
@@ -305,7 +286,7 @@ export const QUESTION_SEED: QuestionSeed[] = [
   {
     slug: "guardrails-posttooluse-normalize",
     conceptSlug: "guardrails",
-    domain: "Claude Code",
+    domain: "Agentic",
     stem: "A `lookup_customer` tool returns phone numbers in a dozen inconsistent formats from different backends, and downstream tools choke on the variance. You want every phone number normalized to E.164 before the model or any other tool ever sees it, deterministically. Which mechanism fits best?",
     options: {
       A: "A `PostToolUse` hook that intercepts `lookup_customer` output and rewrites phone numbers to E.164 before they re-enter the conversation",
@@ -324,7 +305,7 @@ export const QUESTION_SEED: QuestionSeed[] = [
   {
     slug: "guardrails-confidence-escalation",
     conceptSlug: "guardrails",
-    domain: "Claude Code",
+    domain: "Agentic",
     stem: "A support agent must escalate hard tickets to a human. A proposal: ask the model to self-report a confidence score (0–1) and escalate when confidence < 0.6. In testing, the model reports 0.9 on tickets it then answers incorrectly and 0.4 on tickets it handles fine. What's the architecturally sound escalation trigger?",
     options: {
       A: "Keep the self-reported confidence score but recalibrate the escalation threshold upward, from 0.6 to around 0.75",
@@ -343,7 +324,7 @@ export const QUESTION_SEED: QuestionSeed[] = [
   {
     slug: "guardrails-sentiment-escalation",
     conceptSlug: "guardrails",
-    domain: "Claude Code",
+    domain: "Agentic",
     stem: "To decide which tickets need a senior human, a team proposes escalating any ticket where a sentiment classifier flags the customer as \"angry.\" In testing, a calm customer with a complex tax-compliance question is handled by the bot and gets it wrong, while an angry customer with a trivial password reset is escalated. What's the flaw and the better design?",
     options: {
       A: "Escalate every single ticket straight to a senior human to be safe, rather than attempting to triage them at all",

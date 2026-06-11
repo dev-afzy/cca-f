@@ -44,37 +44,36 @@ Current: <pick one or two as primary; add notes as needed>
 
 Track each concept area as a percentage. Update after every session that touched the area.
 
-### Week 1 — API foundations
-- Model Selection (Haiku/Sonnet/Opus): <%>
+### Week 1 — API foundations & extraction quality
+- Model Selection & Distractor Literacy: <%>
 - Context Window Management: <%>
-- Token Mechanics & Cost: <%>
+- Batch Processing & Extraction Quality: <%>
 - Structured Outputs (JSON Mode): <%>
 - Tool Calling Mechanics: <%>
 - Tool Calling Patterns: <%>
 
-### Week 2 — MCP & agentic patterns
-- MCP Architecture (Transport / Protocol / Lifecycle): <%>
+### Week 2 — MCP, tools & agentic patterns
+- MCP Integration & Configuration: <%>
 - MCP Primitives (Tools / Resources / Prompts): <%>
-- Stateful Custom Tools & Security: <%>
+- Tool Interface Design & Structured Errors: <%>
 - Skill vs Tool boundary: <%>
-- Agent Pattern: Router: <%>
+- Error Propagation & Provenance: <%>
 - Agent Pattern: Orchestrator-Workers: <%>
 - Agent Pattern: Evaluator-Optimizer: <%>
 - Agentic Loop & Termination (stop_reason): <%>
 
-### Week 3 — Enterprise & security
-- Data Privacy / PII Handling: <%>
-- Prompt Injection Mitigation: <%>
-- Guardrails (Hooks, Tool Gating): <%>
-- Prompt Caching: <%>
-- Prompt Engineering Optimization: <%>
+### Week 3 — Claude Code & production workflows
+- CLAUDE.md Hierarchy & Path-Scoped Rules: <%>
+- Slash Commands, Skills & Plan Mode: <%>
+- Guardrails (Hooks, Tool Gating, Escalation): <%>
+- Claude Code in CI/CD & Iterative Refinement: <%>
+- Prompt Engineering: Explicit Criteria & Few-Shot: <%>
 
 ### Week 4 — Agentic deep-dive & exam sim
 - Multi-Agent Orchestration (Hub & Spoke): <%>
 - Session Management & Workflows: <%>
 
 ### Cross-cutting
-- Error Handling Responsibility: <%>
 - Multi-instance Review pattern: <%>
 
 Legend: 0–39 broken | 40–59 weak | 60–79 working | 80–100 strong.
@@ -112,7 +111,7 @@ One line per session.
 | Date | Hour | Topic | Outcome |
 |---|---|---|---|
 | 2026-05-18 | 0 | Diagnostic | Weak on agentic loop termination, strong on model selection |
-| 2026-05-19 | 1 | Model family map | Solid; ready for Hour 2 |
+| 2026-05-19 | 1 | Exam map & distractor literacy | Solid; ready for Hour 2 |
 | 2026-05-20 | 2 | Context window mgmt | Confused window vs max_tokens; remediated |
 
 ## [Next Up]

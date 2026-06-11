@@ -71,9 +71,9 @@ export async function renderLedger(studentId: string, now = new Date()): Promise
 
   // Concept mastery grouped by week
   const weekGroups: Array<{ label: string; weekNum: number }> = [
-    { label: "Week 1 — API foundations", weekNum: 1 },
-    { label: "Week 2 — MCP & agentic patterns", weekNum: 2 },
-    { label: "Week 3 — Enterprise & security", weekNum: 3 },
+    { label: "Week 1 — API foundations & extraction quality", weekNum: 1 },
+    { label: "Week 2 — MCP, tools & agentic patterns", weekNum: 2 },
+    { label: "Week 3 — Claude Code & production workflows", weekNum: 3 },
     { label: "Week 4 — Agentic deep-dive & exam sim", weekNum: 4 },
     { label: "Cross-cutting", weekNum: 0 },
   ];
