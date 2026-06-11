@@ -376,6 +376,9 @@ The instructor (you) generates the actual teaching content live, using the Child
 - Context isolation: subagents have their own context and do not share state directly — a feature, not a bug.
 - Passing explicit, scoped context to each subagent vs. dumping the coordinator's full history (context pollution).
 - `fork_session` for isolated parallel exploration without polluting the main context.
+- `AgentDefinition` configuration: each subagent type gets a description, its own system prompt, and tool restrictions — the description is how the coordinator picks it.
+- Structured data formats separating content from metadata (source URLs, document names, page numbers) when passing context between agents, so attribution survives.
+- Coordinator prompts that specify research goals and quality criteria — not step-by-step procedures — so subagents can adapt.
 
 **Friction zones:** Forgetting `'Task'` in `allowedTools`. Forwarding the coordinator's entire history to every subagent (slow, costly, off-topic). Assuming subagents can see each other's outputs. Overly narrow decomposition that leaves coverage gaps between subagents.
 
@@ -393,6 +396,8 @@ The instructor (you) generates the actual teaching content live, using the Child
 - Named sessions for organized, findable multi-session workflows.
 - Stale context: long-running sessions accumulate superseded facts; detect drift and re-ground current state (compaction / fresh read) instead of trusting the model to notice.
 - Prompt chaining (fixed, predictable steps) vs. dynamic adaptive decomposition (next step depends on findings).
+- The resume-vs-fresh decision the exam tests directly: `--resume` when prior context is mostly valid; start FRESH with an injected structured summary when prior tool results are stale — resuming with stale tool results is worse than a clean summary.
+- When resuming after code changed, tell the agent exactly which files changed for targeted re-analysis instead of full re-exploration.
 
 **Friction zones:** Restarting work from scratch instead of `--resume`. Confusing `fork_session` (branch exploration) with `--resume` (continue the same line). Ignoring stale context in extended sessions. Forcing a static prompt chain onto a task that needs to adapt.
 
@@ -406,7 +411,7 @@ The instructor (you) generates the actual teaching content live, using the Child
 
 **Topics:**
 - 60-question timed mock from `question-bank.md` → **Mock 1**.
-- Score by domain (Agentic / Tool & MCP / Claude Code / Prompts / Context).
+- Score by domain (Agentic / Tool & MCP / Claude Code / Prompts / Context). Remind the student the real exam reports a scaled score of 100–1,000 with a 720 pass mark — the mock percentage is a proxy, not the same scale.
 - Spend the rest of the hour on the lowest-scoring domain.
 
 **Friction zones:** Spending too long on early questions and running out of time. Reading distractors before the stem.
@@ -420,7 +425,7 @@ The instructor (you) generates the actual teaching content live, using the Child
 **Topics:**
 - Second 60-question timed mock from `question-bank.md` → **Mock 2**.
 - Compare to Mock 1: trajectory matters. Improving on weakest domain is the success signal.
-- Exam-day strategy: pacing (2 min/question), distractor analysis, when to mark and skip, no penalty for guessing so leave nothing blank.
+- Exam-day strategy: distractor analysis, when to mark and skip, no penalty for guessing so leave nothing blank. The official guide (v0.1) does not state question count or time limit — verify both on the exam portal before booking; pace off the verified numbers. Expect questions framed by 4 of the 6 published scenarios.
 - Final state update: mark the sprint complete.
 
 **Friction zones:** Test anxiety. Second-guessing locked-in answers.
