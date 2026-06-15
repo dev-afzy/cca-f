@@ -273,6 +273,52 @@ If overall < 70% OR any domain < 50%: recommend delaying the real exam by 1–2 
 
 ---
 
+## Warm-Up Mental Models (Practice-Exam Remediation)
+
+Targeted at the loophole patterns from the student's practice exam (weak: Claude Code for CI 67%; missed partial-results and tool-overlap items in Multi-Agent Research; CSR scored 100% but felt shaky). Run these as warm-up retrieval before the relevant hours, and pull the matching seeded questions (`partial-results-coverage-annotation`, `tool-overlap-rename-descriptions`, `criteria-over-fewshot-decision-boundary`, `fewshot-for-output-format`, `ci-no-filter-inline-reasoning`, `ci-disable-noisy-category`, `batch-no-midrequest-tool-calling`, `csr-prerequisite-gate-hook`).
+
+### The Fix-Selection Decision Tree — the #1 loophole: the "few-shot reflex"
+
+The student defaults to *few-shot examples / add-to-prompt / confidence-display* when the correct lever is something more precise. Map the **symptom** to the **lever**:
+
+| Symptom | Correct lever | NOT this |
+|---|---|---|
+| Model picks the wrong tool among similar ones | Rename + rewrite tool **descriptions** (distinct inputs/outputs/boundaries) | few-shot, lower temperature, consolidate tools |
+| Inconsistent **decision** — "what counts as a bug / which severity" | Explicit **categorical criteria** + one concrete example per level | few-shot, static CLAUDE.md lookup table, "be conservative", confidence cutoff |
+| Inconsistent **format / output shape** | **3–4 few-shot examples** of the exact shape | longer prose spec, lower temperature, criteria |
+| A rule that must **never** break (verify before refund, refund ≤ $500) | Programmatic **hook / prerequisite gate** | system-prompt rule, few-shot, tool ordering |
+| **Judgment** calibration — when to escalate vs resolve | Explicit escalation **criteria + few-shot** in the prompt | self-reported confidence, sentiment, trained classifier |
+| Too many findings but you may **not** filter them | **Inline reasoning + confidence** per finding (speed triage, hide nothing) | filter high-confidence, cap to N, raise threshold |
+| One **noisy category** erodes trust in all findings | **Temporarily disable** that category, keep precise ones, fix its prompt, re-enable | confidence display, bigger model, "be more careful" |
+| Upstream returned **partial results** | Annotate **coverage** (well-supported vs gaps) and pass forward | return error, retry-all, mark complete, impute missing |
+
+The one discrimination to drill until automatic: **few-shot fixes FORMAT and demonstrates ambiguous cases; explicit criteria fix DECISION boundaries; renamed descriptions fix TOOL SELECTION; hooks enforce COMPLIANCE.** The two seeded twins `criteria-over-fewshot-decision-boundary` and `fewshot-for-output-format` are deliberately near-identical scenarios with opposite answers — use them back-to-back to force the distinction.
+
+### Constraint-Reading Checklist — the silent-killer loophole
+
+Before choosing, list every **hard constraint** in the stem ("no findings filtered before review", "never refund before verifying", "must stay under 24h"). Then eliminate any option that violates one — no matter how good it otherwise sounds. The exam plants attractive options that quietly break a stated rule (e.g., a "filter to high-confidence" option under a "nothing may be filtered" constraint).
+
+### Batch API — what it actually can't do
+
+- **CAN:** ~50% cost savings, up-to-24h window, correlate via `custom_id`, accept JSON output schemas.
+- **CANNOT:** execute a tool mid-request and feed the result back for the model to continue — no multi-turn tool-calling within one request. **Iterative tool-calling workflows are the disqualifier** — not correlation, not cost, not schema support.
+
+### Customer Support Resolution Agent — the proportionality map (the "100% but shaky" zone)
+
+CSR feels slippery because it mixes four domains and the right lever flips per failure type. Anchor on this:
+
+| The requirement is… | Use | Example |
+|---|---|---|
+| A rule that must hold every time (compliance) | Programmatic **hook / prerequisite gate** | block `process_refund` until `get_customer` verified; deny refund > $500 |
+| A judgment call the model keeps getting wrong | Explicit **criteria + few-shot** | when to escalate vs resolve; honor explicit human requests |
+| The model picking the wrong tool | Tool **descriptions** | `get_customer` vs `lookup_order` disambiguation |
+| Heterogeneous tool output the model chokes on | **PostToolUse hook** (normalize) | phone formats → E.164 |
+| A multi-concern request | **Decompose** into items, handle each, synthesize one resolution | refund + address change + complaint in one message |
+
+Rule of thumb: **deterministic guarantee → code (hook/gate); better judgment → criteria; right tool → description.** When two options are a hook and a prompt, ask: *"Does this rule need to hold 100% of the time?"* If yes, it's the hook — every time.
+
+---
+
 ## Live Generation Guidance
 
 When you need a checkpoint question mid-session and don't want to use an exemplar above:
