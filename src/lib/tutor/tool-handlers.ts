@@ -231,13 +231,14 @@ export async function executeTool(
       }
 
       case "fetch_question": {
-        const { conceptSlug } = input as { conceptSlug: string };
+        const { conceptSlug, difficulty, noRepeat } = input as {
+          conceptSlug: string;
+          difficulty?: "warmup" | "hard";
+          noRepeat?: boolean;
+        };
         assertValidSlug(conceptSlug);
 
-        // Serve a question the student hasn't attempted yet for this concept,
-        // so a multi-question concept rotates through its whole bank instead
-        // of always returning the first row. Once every question has been
-        // seen, fall back to the full set (lowest id) and re-serve.
+        // Questions the student has already attempted (all-time).
         const attempted = await prisma.questionAttempt.findMany({
           where: {
             studentId: ctx.studentId,
@@ -245,23 +246,44 @@ export async function executeTool(
           },
           select: { questionId: true },
         });
-        const attemptedIds = attempted.map((a) => a.questionId);
+        const seenIds = new Set(attempted.map((a) => a.questionId));
 
-        const question =
-          (await prisma.question.findFirst({
-            where: {
-              concept: { slug: conceptSlug },
-              id: { notIn: attemptedIds },
-            },
+        // In a mock (noRepeat), also exclude anything already fetched THIS
+        // session, so a 60-question mock never repeats even before the student
+        // has answered.
+        if (noRepeat && ctx.sessionId) {
+          const fetchedThisSession = await prisma.questionFetch.findMany({
+            where: { sessionId: ctx.sessionId },
+            select: { questionId: true },
+          });
+          for (const f of fetchedThisSession) seenIds.add(f.questionId);
+        }
+        const excludeIds = [...seenIds];
+
+        const baseWhere = {
+          concept: { slug: conceptSlug },
+          ...(difficulty ? { difficulty } : {}),
+        };
+
+        // Prefer an unseen question. If none and noRepeat is set, DO NOT
+        // re-serve — signal exhaustion so the model generates a fresh one.
+        let question = await prisma.question.findFirst({
+          where: { ...baseWhere, id: { notIn: excludeIds } },
+          orderBy: { id: "asc" },
+        });
+        if (!question && !noRepeat) {
+          question = await prisma.question.findFirst({
+            where: baseWhere,
             orderBy: { id: "asc" },
-          })) ??
-          (await prisma.question.findFirst({
-            where: { concept: { slug: conceptSlug } },
-            orderBy: { id: "asc" },
-          }));
+          });
+        }
         if (!question) {
           return {
-            content: JSON.stringify({ found: false }),
+            content: JSON.stringify({
+              found: false,
+              exhausted: true,
+              message: `No unseen ${difficulty ?? "any"}-tier questions remain for concept "${conceptSlug}". Generate a fresh production-grade question per the exam-realism rubric in question-bank.md, present it, and grade it yourself — do not repeat a prior question.`,
+            }),
             isError: false,
           };
         }

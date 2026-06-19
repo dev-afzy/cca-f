@@ -147,6 +147,17 @@ export const TUTOR_TOOLS: Tool[] = [
           type: "string",
           description: "The concept slug to fetch a question for.",
         },
+        difficulty: {
+          type: "string",
+          enum: ["warmup", "hard"],
+          description:
+            "Optional tier filter. Use 'warmup' for in-hour checkpoints; use 'hard' for mock exams (Hours 7, 14, 22, 23).",
+        },
+        noRepeat: {
+          type: "boolean",
+          description:
+            "Set true during mocks. Excludes any question already fetched this session; on exhaustion returns exhausted:true (generate a fresh question) instead of re-serving a duplicate.",
+        },
       },
       required: ["conceptSlug"],
     },
