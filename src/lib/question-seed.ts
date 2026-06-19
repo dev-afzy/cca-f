@@ -6,6 +6,7 @@ export type QuestionSeed = {
   options: Record<string, string>;
   correctKey: string;
   distractorReasons: Record<string, string>;
+  difficulty?: "warmup" | "hard";
 };
 
 export const QUESTION_SEED: QuestionSeed[] = [

@@ -107,6 +107,7 @@ async function main() {
         correctKey: q.correctKey,
         distractorReasons: JSON.stringify(q.distractorReasons),
         source: "hand-authored",
+        difficulty: q.difficulty ?? "warmup",
       },
       update: {
         conceptId: concept?.id ?? null,
@@ -115,6 +116,7 @@ async function main() {
         options: JSON.stringify(q.options),
         correctKey: q.correctKey,
         distractorReasons: JSON.stringify(q.distractorReasons),
+        difficulty: q.difficulty ?? "warmup",
       },
     });
   }

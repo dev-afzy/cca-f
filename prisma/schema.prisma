@@ -124,6 +124,7 @@ model Question {
   correctKey        String
   distractorReasons String
   source            String   @default("hand-authored")
+  difficulty        String   @default("warmup")
   createdAt         DateTime @default(now())
   concept           Concept? @relation(fields: [conceptId], references: [id], onDelete: SetNull)
   attempts          QuestionAttempt[]
