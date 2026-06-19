@@ -77,6 +77,25 @@ const cSlugs = CONCEPT_SEED.map((c) => c.slug);
 const dupeCSlugs = [...new Set(cSlugs.filter((s, i) => cSlugs.indexOf(s) !== i))];
 if (dupeCSlugs.length) errors.push(`duplicate concept slugs: ${dupeCSlugs.join(", ")}`);
 
+// 8. difficulty is a known tier
+const ALLOWED_DIFFICULTY = new Set(["warmup", "hard"]);
+for (const q of QUESTION_SEED) {
+  const d = q.difficulty ?? "warmup";
+  if (!ALLOWED_DIFFICULTY.has(d)) {
+    errors.push(`question "${q.slug}" has unknown difficulty "${d}"`);
+  }
+}
+
+// Informational: hard-tier coverage per domain (mock draws from hard tier).
+const hardByDomain: Record<string, number> = {};
+for (const q of QUESTION_SEED) {
+  if ((q.difficulty ?? "warmup") === "hard") {
+    hardByDomain[q.domain] = (hardByDomain[q.domain] ?? 0) + 1;
+  }
+}
+const hardTotal = Object.values(hardByDomain).reduce((a, b) => a + b, 0);
+console.log(`Hard-tier questions: ${hardTotal} total — ${JSON.stringify(hardByDomain)}`);
+
 if (errors.length) {
   console.error(`Content validation FAILED (${errors.length}):`);
   for (const e of errors) console.error(`  - ${e}`);
