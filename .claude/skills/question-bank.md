@@ -26,6 +26,7 @@ Mocks fetch from the **hard tier** and must never repeat a question within one m
 - Call `fetch_question` with `difficulty: "hard"` and `noRepeat: true` for every mock question.
 - If it returns `exhausted: true`, the hand-authored hard bank for that concept is used up — **generate a fresh production-grade question** per the Exam-Realism Rubric below, present it, and grade it yourself. Never re-ask a prior question.
 - Full mocks (Hours 22, 23) are 60 questions, 120 minutes, drawn to the exam domain weights: Agentic 16, Claude Code 12, Prompts 12, Tool & MCP 11, Context 9.
+- This is now enforced structurally: in a mock hour the `fetch_question` handler defaults to `difficulty: "hard"` + `noRepeat: true` even if you omit them, so a forgotten param cannot leak warmup questions or duplicates into a mock. Pass `difficulty: "warmup"` or `noRepeat: false` explicitly only when you are doing post-mock remediation, not the mock itself.
 
 ## Exam-Realism Rubric (for generated hard questions)
 

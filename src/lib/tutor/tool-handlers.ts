@@ -238,6 +238,25 @@ export async function executeTool(
         };
         assertValidSlug(conceptSlug);
 
+        // Structural mock backstop: a session's hour is set by the system at
+        // creation, so a mock hour is an authoritative signal the model cannot
+        // forget. In a mock hour, DEFAULT difficulty→hard and noRepeat→true when
+        // the model omits them, so a forgotten param can't silently leak warmup
+        // questions or duplicates into a mock. Explicit values still win, so the
+        // model can deliberately fetch warmup / allow-repeat for post-mock
+        // remediation.
+        const MOCK_HOURS = new Set([7, 14, 22, 23]);
+        let inMockHour = false;
+        if (ctx.sessionId) {
+          const sess = await prisma.session.findUnique({
+            where: { id: ctx.sessionId },
+            select: { hour: true },
+          });
+          inMockHour = sess ? MOCK_HOURS.has(sess.hour) : false;
+        }
+        const effDifficulty = difficulty ?? (inMockHour ? "hard" : undefined);
+        const effNoRepeat = noRepeat ?? (inMockHour ? true : false);
+
         // Questions the student has already attempted (all-time).
         const attempted = await prisma.questionAttempt.findMany({
           where: {
@@ -251,7 +270,7 @@ export async function executeTool(
         // In a mock (noRepeat), also exclude anything already fetched THIS
         // session, so a 60-question mock never repeats even before the student
         // has answered.
-        if (noRepeat && ctx.sessionId) {
+        if (effNoRepeat && ctx.sessionId) {
           const fetchedThisSession = await prisma.questionFetch.findMany({
             where: { sessionId: ctx.sessionId },
             select: { questionId: true },
@@ -262,7 +281,7 @@ export async function executeTool(
 
         const baseWhere = {
           concept: { slug: conceptSlug },
-          ...(difficulty ? { difficulty } : {}),
+          ...(effDifficulty ? { difficulty: effDifficulty } : {}),
         };
 
         // Prefer an unseen question. If none and noRepeat is set, DO NOT
@@ -271,7 +290,7 @@ export async function executeTool(
           where: { ...baseWhere, id: { notIn: excludeIds } },
           orderBy: { id: "asc" },
         });
-        if (!question && !noRepeat) {
+        if (!question && !effNoRepeat) {
           question = await prisma.question.findFirst({
             where: baseWhere,
             orderBy: { id: "asc" },
@@ -282,7 +301,7 @@ export async function executeTool(
             content: JSON.stringify({
               found: false,
               exhausted: true,
-              message: `No unseen ${difficulty ?? "any"}-tier questions remain for concept "${conceptSlug}". Generate a fresh production-grade question per the exam-realism rubric in question-bank.md, present it, and grade it yourself — do not repeat a prior question.`,
+              message: `No unseen ${effDifficulty ?? "any"}-tier questions remain for concept "${conceptSlug}". Generate a fresh production-grade question per the exam-realism rubric in question-bank.md, present it, and grade it yourself — do not repeat a prior question.`,
             }),
             isError: false,
           };

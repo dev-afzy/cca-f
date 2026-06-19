@@ -151,7 +151,7 @@ export const TUTOR_TOOLS: Tool[] = [
           type: "string",
           enum: ["warmup", "hard"],
           description:
-            "Optional tier filter. Use 'warmup' for in-hour checkpoints; use 'hard' for mock exams (Hours 7, 14, 22, 23).",
+            "Optional tier filter. Use 'warmup' for in-hour checkpoints; use 'hard' for mock exams (Hours 7, 14, 22, 23). In a mock hour the handler defaults difficulty to \"hard\" and noRepeat to true when omitted; pass \"warmup\" explicitly only for post-mock remediation.",
         },
         noRepeat: {
           type: "boolean",
