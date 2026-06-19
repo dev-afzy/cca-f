@@ -94,6 +94,17 @@ for (const q of QUESTION_SEED) {
   }
 }
 const hardTotal = Object.values(hardByDomain).reduce((a, b) => a + b, 0);
+
+// 9. The hard bank must be able to fill a 60-question mock with zero repeats.
+const HARD_DOMAIN_MIN: Record<string, number> = {
+  "Agentic": 16, "Claude Code": 12, "Prompts": 12, "Tool & MCP": 11, "Context": 9,
+};
+if (hardTotal < 60) errors.push(`hard-tier total ${hardTotal} < 60 (cannot fill a no-repeat mock)`);
+for (const [dom, min] of Object.entries(HARD_DOMAIN_MIN)) {
+  const have = hardByDomain[dom] ?? 0;
+  if (have < min) errors.push(`hard-tier ${dom}: ${have} < required ${min}`);
+}
+
 console.log(`Hard-tier questions: ${hardTotal} total — ${JSON.stringify(hardByDomain)}`);
 
 if (errors.length) {
