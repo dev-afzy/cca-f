@@ -19,6 +19,23 @@ Every well-formed CCA-F question has three layers:
 > > C) [over-engineered alternative that would also work but is wasteful]
 > > D) [plausible but tangential fix that doesn't actually address the root cause]
 
+## Mock Protocol (Hours 7, 14, 22, 23)
+
+Mocks fetch from the **hard tier** and must never repeat a question within one mock:
+
+- Call `fetch_question` with `difficulty: "hard"` and `noRepeat: true` for every mock question.
+- If it returns `exhausted: true`, the hand-authored hard bank for that concept is used up — **generate a fresh production-grade question** per the Exam-Realism Rubric below, present it, and grade it yourself. Never re-ask a prior question.
+- Full mocks (Hours 22, 23) are 60 questions, 120 minutes, drawn to the exam domain weights: Agentic 16, Claude Code 12, Prompts 12, Tool & MCP 11, Context 9.
+
+## Exam-Realism Rubric (for generated hard questions)
+
+The real exam is harder than this app's warm-up tier. A generated hard question MUST have:
+1. A multi-paragraph production scenario with **≥2 quantified facts** (scale, latency, cost, error rate, deadline) and **≥1 hard constraint** the answer must respect.
+2. **Four options, three genuinely defensible** — each the right answer to a slightly different reading — and one best on the stated tradeoff. No obviously-wrong filler.
+3. Distractor reasons that name **which constraint each option violates or which root cause it misses** — never "wrong because another option is right", never reference options by letter (they are shuffled).
+4. A stem that describes **symptoms and constraints only** — it must not name the fix.
+5. Deliberately **slightly above real-exam difficulty**: subtler distractors and one more competing constraint than the candidate expects.
+
 ## Distractor Design — The Seven Common Wrong Patterns
 
 When generating questions live, build distractors using these patterns. The exam uses them constantly.
@@ -268,8 +285,9 @@ Note: Week 3 (Hours 15–19) now carries the Claude Code Configuration domain (C
 
 Same shape as Mock 1, different questions. Trajectory matters: improvement on Mock 1's weakest domain is the success signal.
 
-If Mock 2 score is ≥ 80% overall AND no domain below 60%: ready to sit the real exam.
-If overall < 70% OR any domain < 50%: recommend delaying the real exam by 1–2 weeks for targeted re-study.
+Mocks now draw from the hard tier (above real-exam difficulty), so the bar is higher and predictive:
+- **Ready to sit the real exam:** hard-mock ≥ **90% overall (≈900/1000, Anthropic's own practice target)** AND no domain below **75%**.
+- **Not ready — keep training:** overall < 85% OR any domain < 70%. A >900 here means genuinely ready, not falsely confident.
 
 ---
 
