@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "./prisma";
 import { HOUR_TOPICS } from "./hour-topics";
+import { readinessFrom } from "@/lib/exam/score";
 
 export async function renderLedger(studentId: string, now = new Date()): Promise<string> {
   const student = await prisma.student.findUnique({
@@ -31,6 +32,12 @@ export async function renderLedger(studentId: string, now = new Date()): Promise
   });
 
   if (!student) throw new Error(`Student ${studentId} not found`);
+
+  const examAttempts = await prisma.examAttempt.findMany({
+    where: { studentId, status: { in: ["submitted", "expired"] } },
+    orderBy: { submittedAt: "desc" },
+    take: 10,
+  });
 
   const daysElapsed = Math.max(
     0,
@@ -145,6 +152,20 @@ export async function renderLedger(studentId: string, now = new Date()): Promise
           })
           .join("\n");
 
+  // Exam history
+  const examHistory =
+    examAttempts.length === 0
+      ? "_No exams taken yet._"
+      : [
+          "| Date | Score | Weakest domain | Verdict |",
+          "|---|---|---|---|",
+          ...examAttempts.map((a) => {
+            const r = readinessFrom(a.correctCount, a.totalQuestions, a.perDomain);
+            const date = (a.submittedAt ?? a.startedAt).toISOString().slice(0, 10);
+            return `| ${date} | ${r.overallPct}% | ${r.weakestDomain ?? "—"} | ${r.verdict.ready ? "Ready" : "Keep training"} |`;
+          }),
+        ].join("\n");
+
   // Sprint notes
   const sprintNotesBody =
     student.sprintNotes.length === 0
@@ -211,6 +232,10 @@ ${sessionRows}
 The exact topic for the next session. Be specific.
 
 ${nextUpLine}
+
+## [Exam History]
+
+${examHistory}
 
 ## [Sprint Notes]
 
