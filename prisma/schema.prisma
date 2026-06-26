@@ -27,6 +27,7 @@ model Student {
   strongAreas       StrongArea[]
   attempts          QuestionAttempt[]
   sprintNotes       SprintNote[]
+  examAttempts      ExamAttempt[]
 }
 
 model Concept {
@@ -129,6 +130,7 @@ model Question {
   concept           Concept? @relation(fields: [conceptId], references: [id], onDelete: SetNull)
   attempts          QuestionAttempt[]
   fetches           QuestionFetch[]
+  examAnswers       ExamAnswer[]
 }
 
 // Records the A/B/C/D permutation applied each time fetch_question runs so
@@ -171,4 +173,32 @@ model SprintNote {
   body        String
   createdAt   DateTime @default(now())
   student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model ExamAttempt {
+  id               Int       @id @default(autoincrement())
+  studentId        String
+  startedAt        DateTime  @default(now())
+  submittedAt      DateTime?
+  status           String    @default("in_progress")
+  totalQuestions   Int
+  correctCount     Int       @default(0)
+  perDomain        String    @default("{}")
+  durationLimitSec Int       @default(7200)
+  student          Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  answers          ExamAnswer[]
+  @@index([studentId, startedAt])
+}
+
+model ExamAnswer {
+  id          Int         @id @default(autoincrement())
+  attemptId   Int
+  questionId  Int
+  orderIndex  Int
+  permutation String
+  chosenKey   String?
+  correct     Boolean     @default(false)
+  attempt     ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question    Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  @@index([attemptId, orderIndex])
 }
