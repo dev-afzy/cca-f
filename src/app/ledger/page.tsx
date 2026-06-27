@@ -82,7 +82,7 @@ export default async function LedgerPage() {
   ];
 
   return (
-    <main className="min-h-screen bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100" style={{ fontFamily: "'Georgia', 'Times New Roman', serif" }}>
+    <main className="min-h-screen bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100">
       {/* Header */}
       <header className="border-b-2 border-stone-900 dark:border-stone-700 bg-stone-900 dark:bg-stone-800 text-stone-50">
         <div className="max-w-4xl mx-auto px-6 py-6 flex items-start justify-between gap-4">
@@ -90,7 +90,7 @@ export default async function LedgerPage() {
             <p className="text-xs tracking-[0.25em] uppercase text-stone-400 mb-1">
               Claude Certified Architect — Foundations
             </p>
-            <h1 className="text-2xl font-bold tracking-tight" style={{ fontFamily: "'Georgia', serif" }}>
+            <h1 className="text-2xl font-bold tracking-tight">
               Student Ledger
             </h1>
           </div>

@@ -66,7 +66,6 @@ export default async function Home() {
               </p>
               <h1
                 className="text-[2.75rem] leading-none font-bold tracking-tight text-stone-900 dark:text-stone-50"
-                style={{ fontFamily: "Georgia, serif" }}
               >
                 CCA-F Tutor
               </h1>
@@ -114,7 +113,6 @@ export default async function Home() {
                   </svg>
                   <div
                     className="absolute inset-0 flex items-center justify-center text-[1.1rem] font-bold text-stone-800 dark:text-stone-100"
-                    style={{ fontFamily: "Georgia, serif" }}
                   >
                     {readiness.overallPct}%
                   </div>
@@ -160,7 +158,6 @@ export default async function Home() {
               <>
                 <p
                   className="text-base font-medium text-stone-700 dark:text-stone-300 tabular-nums mb-3"
-                  style={{ fontFamily: "Georgia, serif" }}
                 >
                   {trend.join(" → ")}
                 </p>

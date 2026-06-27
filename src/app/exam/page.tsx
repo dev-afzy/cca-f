@@ -20,7 +20,7 @@ export default async function ExamStartPage() {
     <main className="min-h-screen bg-stone-50 dark:bg-stone-950 flex items-center justify-center px-6">
       <div className="max-w-lg w-full space-y-6 text-center">
         <Link href="/" className="text-xs text-stone-400 hover:underline">← Home</Link>
-        <h1 className="text-3xl font-bold text-stone-900 dark:text-stone-100" style={{ fontFamily: "Georgia, serif" }}>
+        <h1 className="text-3xl font-bold text-stone-900 dark:text-stone-100">
           Mock Exam
         </h1>
         <ul className="text-sm text-stone-600 dark:text-stone-300 space-y-1">

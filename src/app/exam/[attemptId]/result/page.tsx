@@ -78,7 +78,7 @@ export default async function ExamResultPage({
 
         <section className="text-center space-y-2">
           <p className="text-xs uppercase tracking-widest text-stone-400">Result</p>
-          <h1 className="text-5xl font-bold" style={{ fontFamily: "Georgia, serif" }}>
+          <h1 className="text-5xl font-bold">
             {readiness.overallPct}%
           </h1>
           <p className={`text-sm font-medium ${readiness.verdict.ready ? "text-emerald-700 dark:text-emerald-400" : "text-amber-700 dark:text-amber-400"}`}>
