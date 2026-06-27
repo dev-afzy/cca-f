@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import MessageBubble from "./MessageBubble";
 import MasterySidebar from "./MasterySidebar";
 import OptionPicker, { parseOptions } from "./OptionPicker";
@@ -86,6 +86,7 @@ function ChatClientInner({
 }: ChatClientProps) {
   const searchParams = useSearchParams();
   const showDebug = searchParams.get("debug") === "1";
+  const router = useRouter();
 
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
@@ -289,11 +290,22 @@ function ChatClientInner({
   const handleEndSession = async () => {
     if (isEnding) return;
     setIsEnding(true);
+    setError(null);
     try {
-      await fetch("/api/session/end", { method: "POST" });
-    } catch {
-      // ignore
-    } finally {
+      const res = await fetch("/api/session/end", { method: "POST" });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error || `End session failed (${res.status})`);
+      }
+      // Success: the session is marked ended in the DB (no data is deleted).
+      // Navigate to the ledger so this session — and every prior one — stays
+      // visible for reference. Returning to /chat starts a fresh session.
+      router.push("/ledger");
+    } catch (e) {
+      // Surface failures instead of swallowing them, and re-enable the button
+      // so the user can retry. On success we navigate away, so isEnding stays
+      // true until the route changes.
+      setError(e instanceof Error ? e.message : String(e));
       setIsEnding(false);
     }
   };

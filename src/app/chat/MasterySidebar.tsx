@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState } from "react";
 import type { MasterySnapshot, MasteryEntry } from "@/lib/types";
+import NewSessionButton from "../NewSessionButton";
 
 type MasterySidebarProps = {
   snapshot: MasterySnapshot;
@@ -112,13 +113,19 @@ export default function MasterySidebar({
             {snapshot.daysRemaining} day{snapshot.daysRemaining === 1 ? "" : "s"} left
           </p>
         </div>
-        <button
-          onClick={onEndSession}
-          disabled={isEnding}
-          className="text-xs px-3 py-1.5 rounded bg-stone-800 dark:bg-stone-100 text-stone-50 dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-200 disabled:opacity-50 transition-colors"
-        >
-          {isEnding ? "Ending..." : "End session"}
-        </button>
+        <div className="flex flex-col items-end gap-1.5">
+          <button
+            onClick={onEndSession}
+            disabled={isEnding}
+            className="text-xs px-3 py-1.5 rounded bg-stone-800 dark:bg-stone-100 text-stone-50 dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-200 disabled:opacity-50 transition-colors"
+          >
+            {isEnding ? "Ending..." : "End session"}
+          </button>
+          <NewSessionButton
+            label="New session"
+            className="text-xs px-3 py-1.5 rounded border border-stone-300 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 disabled:opacity-50 transition-colors"
+          />
+        </div>
       </div>
 
       {/* Preferred style */}
