@@ -2210,7 +2210,7 @@ export const QUESTION_SEED: QuestionSeed[] = [
     conceptSlug: "cicd-refinement",
     domain: "Claude Code",
     difficulty: "hard",
-    stem: "A CI job invokes Claude Code in print mode to auto-fix lint violations and push a fixup commit. It is already non-interactive, yet ~40% of runs abort early: the logs show the run halting the moment the agent first attempts an `Edit` or a `Bash(git commit)` because that tool action isn't pre-authorized in the unattended environment. Security has a hard rule that this job must never be given blanket permission to run arbitrary commands. What is the correct way to let these runs complete unattended without violating that rule?",
+    stem: "A CI job runs on ~600 pull requests/day, invoking Claude Code in print mode to auto-fix lint violations and push a fixup commit. It is already non-interactive, yet ~40% of runs abort early: the logs show the run halting the moment the agent first attempts an `Edit` or a `Bash(git commit)` because that tool action isn't pre-authorized in the unattended environment. Security has a hard rule that this job must never be given blanket permission to run arbitrary commands. What is the correct way to let these runs complete unattended without violating that rule?",
     options: {
       A: "Run with `--dangerously-skip-permissions` so no tool action can ever block the headless job",
       B: "Pre-authorize exactly the tools this job needs via an allowed-tools list (e.g. `Edit` and the specific git commands) and a non-interactive permission mode, leaving everything else still gated",
@@ -2410,7 +2410,7 @@ export const QUESTION_SEED: QuestionSeed[] = [
     conceptSlug: "skill-vs-tool",
     domain: "Claude Code",
     difficulty: "hard",
-    stem: "A structured-extraction team built a skill to normalize messy vendor invoices into their schema. Its SKILL.md description reads 'Parse PDF invoices.' In practice it fires reliably when a user says 'parse this invoice PDF,' but for ~35% of real requests — phrased as 'normalize this billing statement' or 'clean up these vendor charges into our format' — the skill never activates and the model just free-forms an answer. The same MCP `validate_against_schema` tool is always callable regardless of phrasing. The team wants the skill to engage across the real range of phrasings. What is the correct diagnosis and fix?",
+    stem: "A structured-extraction team built a skill to normalize messy vendor invoices into their schema, running it across ~8,000 documents/month. Its SKILL.md description reads 'Parse PDF invoices.' In practice it fires reliably when a user says 'parse this invoice PDF,' but for ~35% of real requests — phrased as 'normalize this billing statement' or 'clean up these vendor charges into our format' — the skill never activates and the model just free-forms an answer. The same MCP `validate_against_schema` tool is always callable regardless of phrasing. The team wants the skill to engage across the real range of phrasings. What is the correct diagnosis and fix?",
     options: {
       A: "A skill activates by matching its description to the request, and a narrow 'Parse PDF invoices' description doesn't match phrasings like 'normalize a billing statement'; broadening the description to cover those terms and intents makes it activate across the real range",
       B: "Skills always activate when present, so the misfires mean the SKILL.md is malformed; revalidate its frontmatter syntax to fix loading",
