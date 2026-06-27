@@ -2857,7 +2857,7 @@ export const QUESTION_SEED: QuestionSeed[] = [
       A: "The Resource isn't loading because the server is misconfigured; re-register it and the text will auto-populate the context each turn as expected",
       B: "Resources can't hold documents this large, so split the policy across several smaller Resources so they fit and auto-load",
       C: "Resources are model-/application-requested context, not content auto-injected into every turn; the agent must actually reference or fetch policy://refunds (or the host must surface it) so the policy text is in context before the model answers — the design wrongly assumed automatic loading",
-      D: "Convert the policy from a Resource into a system-prompt block isn't needed; instead lower temperature so the model recalls the policy more accurately from training",
+      D: "Lower the model's temperature so it recalls the refund policy more accurately and consistently from its training data",
     },
     correctKey: "C",
     distractorReasons: {
