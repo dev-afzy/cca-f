@@ -8,6 +8,7 @@ import type {
   MessageParam,
   ToolUseBlock,
 } from "@anthropic-ai/sdk/resources/messages";
+import { fromSdkUsage, addUsage, ZERO_USAGE, type TokenUsage } from "@/lib/billing/usage";
 
 type LoopInput = {
   student: { id: string; currentHour: number };
@@ -30,6 +31,8 @@ type LoopResult = {
   assistantText: string;
   toolCalls: ToolCallLog[];
   stoppedAt: "end_turn" | "stop_sequence" | "iteration_cap";
+  usage: TokenUsage;
+  model: string;
 };
 
 const CAP_MESSAGE =
@@ -42,6 +45,7 @@ export async function runTutorLoop(
   const cap = input.iterationCap ?? 25;
   const toolCalls: ToolCallLog[] = [];
   const fullText: string[] = [];
+  let usage: TokenUsage = ZERO_USAGE;
 
   const ctx: ToolContext = {
     studentId: input.student.id,
@@ -74,6 +78,7 @@ export async function runTutorLoop(
     });
 
     const response = await stream.finalMessage();
+    usage = addUsage(usage, fromSdkUsage(response.usage));
 
     if (response.stop_reason === "tool_use") {
       const toolUseBlocks = response.content.filter(
@@ -142,6 +147,8 @@ export async function runTutorLoop(
         assistantText: fullText.join("").trim(),
         toolCalls,
         stoppedAt: response.stop_reason as "end_turn" | "stop_sequence",
+        usage,
+        model: MODEL_TUTOR,
       };
     }
 
@@ -150,6 +157,8 @@ export async function runTutorLoop(
       assistantText: fullText.join("").trim(),
       toolCalls,
       stoppedAt: "end_turn",
+      usage,
+      model: MODEL_TUTOR,
     };
   }
 
@@ -162,5 +171,7 @@ export async function runTutorLoop(
     assistantText: capText,
     toolCalls,
     stoppedAt: "iteration_cap",
+    usage,
+    model: MODEL_TUTOR,
   };
 }

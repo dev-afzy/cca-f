@@ -10,6 +10,8 @@ import { getMasterySnapshot } from "@/lib/tutor/mastery";
 import { syncLedger } from "@/lib/ledger-sync";
 import type { MessageParam } from "@anthropic-ai/sdk/resources/messages";
 import { requireUserIdApi } from "@/lib/current-user";
+import { ensureWallet, chargeTurn, KILL_SWITCH_ON } from "@/lib/billing/wallet";
+import { overDailyUserCap, overGlobalCap } from "@/lib/billing/guards";
 
 function jsonErrorResponse(message: string, status: number) {
   return new Response(JSON.stringify({ error: message }), {
@@ -36,6 +38,14 @@ export async function POST(req: NextRequest) {
   if (!student) {
     return jsonErrorResponse("Student not found", 404);
   }
+
+  if (await KILL_SWITCH_ON()) return jsonErrorResponse("Service temporarily paused. Try again soon.", 503);
+  const wallet = await ensureWallet(userId);
+  if (wallet.balanceMicros <= 0) {
+    return new Response(JSON.stringify({ error: "insufficient_credits", code: "INSUFFICIENT_CREDITS", balanceMicros: wallet.balanceMicros }), { status: 402, headers: { "Content-Type": "application/json" } });
+  }
+  if (await overGlobalCap()) return jsonErrorResponse("Service temporarily paused. Try again soon.", 503);
+  if (await overDailyUserCap(userId)) return new Response(JSON.stringify({ error: "daily_cap", code: "DAILY_CAP" }), { status: 429, headers: { "Content-Type": "application/json" } });
 
   const session = await getOrCreateOpenSession(userId);
 
@@ -74,7 +84,7 @@ export async function POST(req: NextRequest) {
           .at(-1);
         const assistantTail = lastAssistant?.content ?? "";
 
-        const intent = await classifyIntent({ assistantTail, message });
+        const { intent, usage: routerUsage, model: routerModel } = await classifyIntent({ assistantTail, message });
         const ledgerSnapshot = await buildLedgerSnapshot(userId);
 
         const loopResult = await runTutorLoop(
@@ -114,6 +124,20 @@ export async function POST(req: NextRequest) {
           // non-fatal
         }
 
+        let balanceMicros: number | undefined;
+        let costMicros: number | undefined;
+        try {
+          const perModel = [
+            { model: routerModel, ...routerUsage },
+            { model: loopResult.model, ...loopResult.usage },
+          ];
+          const charge = await chargeTurn({ userId, sessionId: session.id, route: "turn", perModel, stoppedAt: loopResult.stoppedAt });
+          balanceMicros = charge.balanceMicros;
+          costMicros = charge.billedMicros;
+        } catch (e) {
+          console.error("[billing] chargeTurn failed", e);
+        }
+
         const masterySnapshot = await getMasterySnapshot(userId);
         const freshStudent = await prisma.student.findUnique({
           where: { id: userId },
@@ -128,6 +152,8 @@ export async function POST(req: NextRequest) {
           toolsCalled: loopResult.toolCalls.map((t) => t.name),
           currentHour: freshStudent?.currentHour ?? student.currentHour,
           stoppedAt: loopResult.stoppedAt,
+          balanceMicros,
+          costMicros,
         });
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);

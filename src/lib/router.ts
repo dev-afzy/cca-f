@@ -1,6 +1,7 @@
 import "server-only";
 import { anthropic, MODEL_ROUTER } from "./anthropic";
 import type { Intent } from "./types";
+import { fromSdkUsage, ZERO_USAGE, type TokenUsage } from "@/lib/billing/usage";
 
 const ROUTER_SYSTEM_PROMPT = `You are a router for a tutoring app. Classify the user's latest message into exactly one of these intents:
 
@@ -20,7 +21,7 @@ type RouterInput = {
 export async function classifyIntent({
   assistantTail,
   message,
-}: RouterInput): Promise<Intent> {
+}: RouterInput): Promise<{ intent: Intent; usage: TokenUsage; model: string }> {
   try {
     const userMessage = `Last tutor message (truncated to ~400 chars): "${assistantTail.slice(0, 400)}"\nUser message: "${message}"`;
 
@@ -43,10 +44,10 @@ export async function classifyIntent({
       "freeform_chat",
     ];
     if (validIntents.includes(parsed.intent as Intent)) {
-      return parsed.intent as Intent;
+      return { intent: parsed.intent as Intent, usage: fromSdkUsage(response.usage), model: MODEL_ROUTER };
     }
-    return "freeform_chat";
+    return { intent: "freeform_chat", usage: fromSdkUsage(response.usage), model: MODEL_ROUTER };
   } catch {
-    return "freeform_chat";
+    return { intent: "freeform_chat", usage: ZERO_USAGE, model: MODEL_ROUTER };
   }
 }
