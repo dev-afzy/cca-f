@@ -11,11 +11,13 @@ type TopUpModalProps = {
 
 export default function TopUpModal({ open, onClose, reason }: TopUpModalProps) {
   const [loadingPackId, setLoadingPackId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   if (!open) return null;
 
   const handleBuy = async (packId: string) => {
     if (loadingPackId) return;
+    setError(null);
     setLoadingPackId(packId);
     try {
       const res = await fetch("/api/billing/checkout", {
@@ -28,9 +30,11 @@ export default function TopUpModal({ open, onClose, reason }: TopUpModalProps) {
         window.location.href = data.url;
       } else {
         setLoadingPackId(null);
+        setError("Couldn't start checkout. Please try again.");
       }
     } catch {
       setLoadingPackId(null);
+      setError("Couldn't start checkout. Please try again.");
     }
   };
 
@@ -104,6 +108,12 @@ export default function TopUpModal({ open, onClose, reason }: TopUpModalProps) {
             );
           })}
         </div>
+
+        {error && (
+          <p className="mt-3 text-xs text-rose-700 dark:text-rose-400 text-center">
+            {error}
+          </p>
+        )}
 
         <p className="mt-4 text-[11px] text-stone-400 dark:text-stone-500 text-center">
           Secure checkout via Stripe. Credits are applied instantly after payment.

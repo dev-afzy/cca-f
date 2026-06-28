@@ -305,34 +305,26 @@ function ChatClientInner({
       if (!res.ok || !res.body) {
         const errBody = (await res.json().catch(() => ({ error: res.statusText }))) as { error?: string };
         if (res.status === 402) {
-          // Out of credits — open top-up modal, restore trailing assistant bubble
-          setMessages((prev) => {
-            const next = [...prev];
-            for (let i = next.length - 1; i >= 0; i--) {
-              if (next[i].role === "assistant") {
-                next[i] = { role: "assistant", content: "" };
-                return next;
-              }
-            }
-            return next;
-          });
+          // Out of credits — open top-up modal, remove the empty assistant placeholder retry added
+          setMessages((prev) =>
+            prev[prev.length - 1]?.role === "assistant" && prev[prev.length - 1].content === ""
+              ? prev.slice(0, -1)
+              : prev
+          );
           setIsLoading(false);
+          inputRef.current?.focus();
           setTopUp({ open: true, reason: "You're out of credits — top up to keep going." });
           return;
         }
         if (res.status === 429) {
-          // Daily cap hit — open top-up modal, restore trailing assistant bubble
-          setMessages((prev) => {
-            const next = [...prev];
-            for (let i = next.length - 1; i >= 0; i--) {
-              if (next[i].role === "assistant") {
-                next[i] = { role: "assistant", content: "" };
-                return next;
-              }
-            }
-            return next;
-          });
+          // Daily cap hit — open top-up modal, remove the empty assistant placeholder retry added
+          setMessages((prev) =>
+            prev[prev.length - 1]?.role === "assistant" && prev[prev.length - 1].content === ""
+              ? prev.slice(0, -1)
+              : prev
+          );
           setIsLoading(false);
+          inputRef.current?.focus();
           setTopUp({ open: true, reason: "Daily limit reached — try again tomorrow." });
           return;
         }
