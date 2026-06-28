@@ -28,6 +28,7 @@ model Student {
   attempts          QuestionAttempt[]
   sprintNotes       SprintNote[]
   examAttempts      ExamAttempt[]
+  wallet            Wallet?
 }
 
 model Concept {
@@ -234,4 +235,55 @@ model VerificationToken {
   token      String
   expires    DateTime
   @@unique([identifier, token])
+}
+
+model Wallet {
+  id                   Int       @id @default(autoincrement())
+  studentId            String    @unique
+  balanceMicros        Int       @default(0)
+  lifetimeGrantMicros  Int       @default(0)
+  lifetimeSpentMicros  Int       @default(0)
+  freeTrialGrantedAt   DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  student              Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  usageEvents          UsageEvent[]
+  transactions         CreditTransaction[]
+}
+
+model UsageEvent {
+  id               Int      @id @default(autoincrement())
+  walletId         Int
+  studentId        String
+  sessionId        Int?
+  route            String
+  stoppedAt        String
+  modelBreakdown   String
+  inputTokens      Int      @default(0)
+  outputTokens     Int      @default(0)
+  cacheReadTokens  Int      @default(0)
+  cacheWriteTokens Int      @default(0)
+  rawCostMicros    Int
+  billedMicros     Int
+  createdAt        DateTime @default(now())
+  wallet           Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  @@index([studentId, createdAt])
+  @@index([sessionId])
+}
+
+model CreditTransaction {
+  id                  Int      @id @default(autoincrement())
+  walletId            Int
+  studentId           String
+  kind                String
+  status              String   @default("completed")
+  amountPaidCents     Int      @default(0)
+  creditsMicros       Int
+  stripeSessionId     String?  @unique
+  stripePaymentIntent String?
+  stripeEventId       String?  @unique
+  idempotencyKey      String?  @unique
+  createdAt           DateTime @default(now())
+  wallet              Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  @@index([studentId, createdAt])
 }
