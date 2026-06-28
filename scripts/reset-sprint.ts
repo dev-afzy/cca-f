@@ -21,6 +21,7 @@ const adapter = new PrismaLibSql({ url: `file:${dbPath}` });
 const prisma = new PrismaClient({ adapter });
 
 const SPRINT_DAYS = 23;
+const studentId = process.argv[2] ?? "default";
 
 async function main() {
   // Pin to midnight UTC so day math is stable across timezones.
@@ -33,21 +34,21 @@ async function main() {
   );
 
   const before = await prisma.student.findUnique({
-    where: { id: "default" },
+    where: { id: studentId },
     select: { sprintStartDate: true, targetExamDate: true, currentHour: true },
   });
   if (!before) {
-    console.error('No student with id="default" found. Run `npm run db:setup` first.');
+    console.error(`No student with id="${studentId}" found. Run \`npm run db:setup\` first.`);
     process.exit(1);
   }
 
   await prisma.student.update({
-    where: { id: "default" },
+    where: { id: studentId },
     data: { sprintStartDate: startOfTodayUtc, targetExamDate },
   });
 
   const iso = (d: Date) => d.toISOString().slice(0, 10);
-  console.log(`Sprint reset for student "default" (currentHour=${before.currentHour}, kept as-is):`);
+  console.log(`Sprint reset for student "${studentId}" (currentHour=${before.currentHour}, kept as-is):`);
   console.log(`  sprintStartDate: ${iso(before.sprintStartDate)} → ${iso(startOfTodayUtc)}`);
   console.log(`  targetExamDate:  ${iso(before.targetExamDate)} → ${iso(targetExamDate)}`);
 }
