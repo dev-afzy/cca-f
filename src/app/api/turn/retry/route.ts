@@ -1,4 +1,7 @@
 export const runtime = "nodejs";
+// The agentic tutor loop can run up to 25 model round-trips; raise the
+// serverless function ceiling so a long retry isn't killed mid-stream.
+export const maxDuration = 60;
 
 import { prisma } from "@/lib/prisma";
 import { classifyIntent } from "@/lib/router";
