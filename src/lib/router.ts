@@ -35,7 +35,13 @@ export async function classifyIntent({
 
     const text =
       response.content[0]?.type === "text" ? response.content[0].text : "";
-    const parsed = JSON.parse(text.trim()) as { intent: string; confidence: number };
+    // Models often wrap JSON in ```json fences or add prose — extract the first
+    // {...} object rather than parsing the raw text (which would throw on fences).
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : text.trim()) as {
+      intent: string;
+      confidence: number;
+    };
 
     const validIntents: Intent[] = [
       "checkpoint_answer",
