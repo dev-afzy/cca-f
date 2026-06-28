@@ -34,6 +34,15 @@ export async function POST(req: Request): Promise<Response> {
       return new Response("ignored: missing metadata", { status: 200 });
     }
 
+    // Only credit once the money is actually captured. For mode:"payment",
+    // checkout.session.completed can fire with payment_status "unpaid" for
+    // delayed/asynchronous payment methods — granting then would hand out
+    // credits before capture. Cards are always "paid", so this is invisible
+    // to the standard flow and closes the async-payment hole.
+    if (s.payment_status !== "paid") {
+      return new Response("ignored: not paid", { status: 200 });
+    }
+
     try {
       await grantCredits({
         userId,
