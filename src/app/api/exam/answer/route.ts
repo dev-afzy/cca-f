@@ -3,10 +3,14 @@ export const runtime = "nodejs";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isOptionKey } from "@/lib/tutor/shuffle";
-
-const STUDENT_ID = "default";
+import { requireUserIdApi } from "@/lib/current-user";
 
 export async function POST(req: Request) {
+  const userId = await requireUserIdApi();
+  if (!userId) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
   try {
     const { attemptId, questionId, chosenKey } = (await req.json()) as {
       attemptId?: number;
@@ -18,7 +22,7 @@ export async function POST(req: Request) {
     }
 
     const attempt = await prisma.examAttempt.findFirst({
-      where: { id: attemptId, studentId: STUDENT_ID },
+      where: { id: attemptId, studentId: userId },
       select: { status: true },
     });
     if (!attempt) return NextResponse.json({ error: "attempt not found" }, { status: 404 });

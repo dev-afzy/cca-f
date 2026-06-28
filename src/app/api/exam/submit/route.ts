@@ -3,10 +3,14 @@ export const runtime = "nodejs";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { gradeAnswer, summarize, type GradedAnswer } from "@/lib/exam/score";
-
-const STUDENT_ID = "default";
+import { requireUserIdApi } from "@/lib/current-user";
 
 export async function POST(req: Request) {
+  const userId = await requireUserIdApi();
+  if (!userId) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
   try {
     const { attemptId } = (await req.json()) as { attemptId?: number };
     if (typeof attemptId !== "number") {
@@ -14,7 +18,7 @@ export async function POST(req: Request) {
     }
 
     const attempt = await prisma.examAttempt.findFirst({
-      where: { id: attemptId, studentId: STUDENT_ID },
+      where: { id: attemptId, studentId: userId },
       include: { answers: { include: { question: true } } },
     });
     if (!attempt) return NextResponse.json({ error: "attempt not found" }, { status: 404 });

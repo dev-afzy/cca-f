@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
 import { renderLedger } from "@/lib/ledger-render";
+import { requireUserIdApi } from "@/lib/current-user";
 
 export async function GET() {
+  const userId = await requireUserIdApi();
+  if (!userId) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
   try {
-    const md = await renderLedger("default");
+    const md = await renderLedger(userId);
     return new NextResponse(md, {
       status: 200,
       headers: { "Content-Type": "text/markdown; charset=utf-8" },

@@ -3,10 +3,14 @@ export const runtime = "nodejs";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { selectExamQuestions, type SourceQuestion } from "@/lib/exam/select";
-
-const STUDENT_ID = "default";
+import { requireUserIdApi } from "@/lib/current-user";
 
 export async function POST() {
+  const userId = await requireUserIdApi();
+  if (!userId) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
   try {
     const pool = (await prisma.question.findMany({
       where: { difficulty: "hard" },
@@ -17,7 +21,7 @@ export async function POST() {
 
     const attempt = await prisma.examAttempt.create({
       data: {
-        studentId: STUDENT_ID,
+        studentId: userId,
         status: "in_progress",
         totalQuestions: selected.length,
         durationLimitSec: 7200,

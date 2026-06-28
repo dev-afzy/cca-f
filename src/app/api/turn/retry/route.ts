@@ -8,8 +8,7 @@ import { buildLedgerSnapshot } from "@/lib/tutor/ledger-snapshot";
 import { getMasterySnapshot } from "@/lib/tutor/mastery";
 import { syncLedger } from "@/lib/ledger-sync";
 import type { MessageParam } from "@anthropic-ai/sdk/resources/messages";
-
-const STUDENT_ID = "default";
+import { requireUserIdApi } from "@/lib/current-user";
 
 function jsonErrorResponse(message: string, status: number) {
   return new Response(JSON.stringify({ error: message }), {
@@ -19,14 +18,19 @@ function jsonErrorResponse(message: string, status: number) {
 }
 
 export async function POST() {
+  const userId = await requireUserIdApi();
+  if (!userId) {
+    return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers: { "Content-Type": "application/json" } });
+  }
+
   const student = await prisma.student.findUnique({
-    where: { id: STUDENT_ID },
+    where: { id: userId },
   });
   if (!student) {
     return jsonErrorResponse("Student not found", 404);
   }
 
-  const session = await getOrCreateOpenSession(STUDENT_ID);
+  const session = await getOrCreateOpenSession(userId);
 
   // Drop trailing assistant + tool log messages from the failed attempt so the
   // history ends on the user turn we're retrying.
@@ -83,11 +87,11 @@ export async function POST() {
           assistantTail,
           message: lastUserMessage,
         });
-        const ledgerSnapshot = await buildLedgerSnapshot(STUDENT_ID);
+        const ledgerSnapshot = await buildLedgerSnapshot(userId);
 
         const loopResult = await runTutorLoop(
           {
-            student: { id: STUDENT_ID, currentHour: student.currentHour },
+            student: { id: userId, currentHour: student.currentHour },
             session: { id: session.id },
             hour: student.currentHour,
             history: history.slice(0, -1),
@@ -117,14 +121,14 @@ export async function POST() {
         }
 
         try {
-          await syncLedger(STUDENT_ID);
+          await syncLedger(userId);
         } catch {
           // non-fatal
         }
 
-        const masterySnapshot = await getMasterySnapshot(STUDENT_ID);
+        const masterySnapshot = await getMasterySnapshot(userId);
         const freshStudent = await prisma.student.findUnique({
-          where: { id: STUDENT_ID },
+          where: { id: userId },
           select: { currentHour: true },
         });
 
