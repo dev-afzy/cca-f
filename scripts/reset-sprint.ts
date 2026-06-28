@@ -1,15 +1,19 @@
 /**
- * Reset the default student's sprint clock to start today.
+ * Reset a student's sprint clock to start today.
  *
  *   sprintStartDate = today (midnight UTC)
  *   targetExamDate  = today + 23 days
+ *
+ * Usage:
+ *   npm run db:reset-sprint [studentId]
+ *
+ * studentId defaults to "default" when omitted. Pass a real user id (e.g. the
+ * OAuth sub) to reset any individual student's sprint without touching others.
  *
  * Use whenever the calendar pace drifts away from actual study cadence — e.g.
  * you took a multi-day break and the tutor is now nagging you about being
  * behind by N hours. Keeps every other column (currentHour, masteries,
  * sessions, attempts) intact.
- *
- *   npm run db:reset-sprint
  */
 import { PrismaClient } from "@prisma/client";
 import { PrismaLibSql } from "@prisma/adapter-libsql";

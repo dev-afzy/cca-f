@@ -30,10 +30,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "attempt already closed" }, { status: 409 });
     }
 
-    await prisma.examAnswer.updateMany({
+    const result = await prisma.examAnswer.updateMany({
       where: { attemptId, questionId },
       data: { chosenKey },
     });
+
+    if (result.count === 0) {
+      return NextResponse.json({ error: "question not in attempt" }, { status: 404 });
+    }
 
     return NextResponse.json({ ok: true });
   } catch (err) {
