@@ -8,6 +8,7 @@ type MasterySidebarProps = {
   snapshot: MasterySnapshot;
   onEndSession: () => void;
   isEnding: boolean;
+  signOutSlot?: React.ReactNode;
 };
 
 function masteryColor(pct: number): string {
@@ -46,6 +47,7 @@ export default function MasterySidebar({
   snapshot,
   onEndSession,
   isEnding,
+  signOutSlot,
 }: MasterySidebarProps) {
   const groups = groupByWeek(snapshot.entries);
   const weekLabel =
@@ -125,6 +127,7 @@ export default function MasterySidebar({
             label="New session"
             className="text-xs px-3 py-1.5 rounded border border-stone-300 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 disabled:opacity-50 transition-colors"
           />
+          {signOutSlot}
         </div>
       </div>
 

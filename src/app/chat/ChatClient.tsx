@@ -77,12 +77,14 @@ type ChatClientProps = {
   }>;
   initialMastery: MasterySnapshot;
   studentName: string;
+  signOutSlot?: React.ReactNode;
 };
 
 function ChatClientInner({
   initialMessages,
   initialMastery,
   studentName,
+  signOutSlot,
 }: ChatClientProps) {
   const searchParams = useSearchParams();
   const showDebug = searchParams.get("debug") === "1";
@@ -443,6 +445,7 @@ function ChatClientInner({
         snapshot={mastery}
         onEndSession={() => void handleEndSession()}
         isEnding={isEnding}
+        signOutSlot={signOutSlot}
       />
     </div>
   );

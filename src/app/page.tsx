@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import ThemeToggle from "./ThemeToggle";
 import NewSessionButton from "./NewSessionButton";
+import SignOutButton from "./SignOutButton";
 import { prisma } from "@/lib/prisma";
 import { getMasterySnapshot } from "@/lib/tutor/mastery";
 import { readinessFrom } from "@/lib/exam/score";
@@ -88,7 +89,13 @@ export default async function Home() {
           <p className="text-[10px] tracking-[0.3em] uppercase text-stone-400 dark:text-stone-500 font-medium">
             Claude Certified Architect — Foundations
           </p>
-          <ThemeToggle />
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-stone-500 dark:text-stone-400">
+              {session.user.name ?? "Student"}
+            </span>
+            <SignOutButton />
+            <ThemeToggle />
+          </div>
         </div>
 
         {/* Bento grid */}

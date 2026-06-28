@@ -5,6 +5,7 @@ import { getMasterySnapshot } from "@/lib/tutor/mastery";
 import { getOrCreateOpenSession } from "@/lib/tutor/session";
 import { requireUserId } from "@/lib/current-user";
 import ChatClient from "./ChatClient";
+import SignOutButton from "@/app/SignOutButton";
 
 export default async function ChatPage() {
   const userId = await requireUserId();
@@ -47,6 +48,9 @@ export default async function ChatPage() {
       initialMessages={initialMessages}
       initialMastery={masterySnapshot}
       studentName={student.name || "Student"}
+      signOutSlot={
+        <SignOutButton className="text-xs px-3 py-1.5 rounded border border-stone-300 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors" />
+      }
     />
   );
 }
