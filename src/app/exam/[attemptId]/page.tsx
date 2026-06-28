@@ -3,21 +3,22 @@ export const dynamic = "force-dynamic";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { parsePermutation, KEYS, type CanonicalOptions } from "@/lib/tutor/shuffle";
+import { requireUserId } from "@/lib/current-user";
 import ExamRunner, { type RunnerQuestion } from "./ExamRunner";
-
-const STUDENT_ID = "default";
 
 export default async function ExamRunnerPage({
   params,
 }: {
   params: Promise<{ attemptId: string }>;
 }) {
+  const userId = await requireUserId();
+
   const { attemptId: attemptIdStr } = await params;
   const attemptId = Number(attemptIdStr);
   if (!Number.isFinite(attemptId)) redirect("/exam");
 
   const attempt = await prisma.examAttempt.findFirst({
-    where: { id: attemptId, studentId: STUDENT_ID },
+    where: { id: attemptId, studentId: userId },
     include: {
       answers: {
         orderBy: { orderIndex: "asc" },

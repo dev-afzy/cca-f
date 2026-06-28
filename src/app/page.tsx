@@ -7,15 +7,50 @@ import { prisma } from "@/lib/prisma";
 import { getMasterySnapshot } from "@/lib/tutor/mastery";
 import { readinessFrom } from "@/lib/exam/score";
 import { HOUR_TOPICS } from "@/lib/hour-topics";
-
-const STUDENT_ID = "default";
+import { auth } from "@/lib/auth";
 
 export default async function Home() {
-  const student = await prisma.student.findUnique({ where: { id: STUDENT_ID } });
-  const snapshot = student ? await getMasterySnapshot(STUDENT_ID) : null;
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return (
+      <main className="min-h-screen bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100">
+        <div className="max-w-5xl mx-auto px-6 py-10">
+          <div className="flex items-center justify-between mb-10">
+            <p className="text-[10px] tracking-[0.3em] uppercase text-stone-400 dark:text-stone-500 font-medium">
+              Claude Certified Architect — Foundations
+            </p>
+            <ThemeToggle />
+          </div>
+          <div className="flex flex-col items-center justify-center py-24 gap-6 text-center">
+            <p className="text-[10px] tracking-[0.3em] uppercase text-amber-600 dark:text-amber-500 font-semibold">
+              Study scaffold
+            </p>
+            <h1 className="text-[2.75rem] leading-none font-bold tracking-tight text-stone-900 dark:text-stone-50">
+              CCA-F Tutor
+            </h1>
+            <p className="text-stone-500 dark:text-stone-400 text-sm leading-relaxed max-w-xs">
+              Architect-level fluency in 23 hours — adaptive questions, spaced recall, timed mocks.
+            </p>
+            <Link
+              href="/login"
+              className="mt-4 inline-flex items-center justify-center rounded-xl bg-amber-500 hover:bg-amber-400 dark:bg-amber-500 dark:hover:bg-amber-400 text-white px-8 py-4 font-semibold shadow-md hover:shadow-lg transition-all duration-150"
+            >
+              Sign in
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  const userId = session.user.id;
+
+  const student = await prisma.student.findUnique({ where: { id: userId } });
+  const snapshot = student ? await getMasterySnapshot(userId) : null;
 
   const attempts = await prisma.examAttempt.findMany({
-    where: { studentId: STUDENT_ID, status: { in: ["submitted", "expired"] } },
+    where: { studentId: userId, status: { in: ["submitted", "expired"] } },
     orderBy: { submittedAt: "desc" },
     take: 5,
   });

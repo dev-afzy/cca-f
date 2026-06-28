@@ -12,20 +12,21 @@ import {
   type CanonicalOptions,
 } from "@/lib/tutor/shuffle";
 import { DOMAIN_LABELS } from "@/lib/domains";
-
-const STUDENT_ID = "default";
+import { requireUserId } from "@/lib/current-user";
 
 export default async function ExamResultPage({
   params,
 }: {
   params: Promise<{ attemptId: string }>;
 }) {
+  const userId = await requireUserId();
+
   const { attemptId: attemptIdStr } = await params;
   const attemptId = Number(attemptIdStr);
   if (!Number.isFinite(attemptId)) redirect("/exam");
 
   const attempt = await prisma.examAttempt.findFirst({
-    where: { id: attemptId, studentId: STUDENT_ID },
+    where: { id: attemptId, studentId: userId },
     include: {
       answers: {
         orderBy: { orderIndex: "asc" },

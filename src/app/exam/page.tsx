@@ -3,13 +3,14 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { readinessFrom } from "@/lib/exam/score";
+import { requireUserId } from "@/lib/current-user";
 import StartExamButton from "./StartExamButton";
 
-const STUDENT_ID = "default";
-
 export default async function ExamStartPage() {
+  const userId = await requireUserId();
+
   const last = await prisma.examAttempt.findFirst({
-    where: { studentId: STUDENT_ID, status: { in: ["submitted", "expired"] } },
+    where: { studentId: userId, status: { in: ["submitted", "expired"] } },
     orderBy: { submittedAt: "desc" },
   });
   const lastReadiness = last

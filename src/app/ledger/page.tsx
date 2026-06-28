@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { HOUR_TOPICS } from "@/lib/hour-topics";
 import { SyncButton } from "./SyncButton";
 import ThemeToggle from "../ThemeToggle";
+import { requireUserId } from "@/lib/current-user";
 
 function masteryColor(mastery: number): string {
   if (mastery >= 80) return "bg-emerald-500";
@@ -18,10 +19,11 @@ function masteryLabel(mastery: number): string {
 }
 
 export default async function LedgerPage() {
+  const userId = await requireUserId();
   const now = new Date();
 
   const student = await prisma.student.findUnique({
-    where: { id: "default" },
+    where: { id: userId },
     include: {
       masteries: {
         include: { concept: true },

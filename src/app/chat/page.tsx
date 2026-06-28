@@ -3,13 +3,14 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { getMasterySnapshot } from "@/lib/tutor/mastery";
 import { getOrCreateOpenSession } from "@/lib/tutor/session";
+import { requireUserId } from "@/lib/current-user";
 import ChatClient from "./ChatClient";
 
-const STUDENT_ID = "default";
-
 export default async function ChatPage() {
+  const userId = await requireUserId();
+
   const student = await prisma.student.findUnique({
-    where: { id: STUDENT_ID },
+    where: { id: userId },
   });
 
   if (!student) {
@@ -22,7 +23,7 @@ export default async function ChatPage() {
     );
   }
 
-  const session = await getOrCreateOpenSession(STUDENT_ID);
+  const session = await getOrCreateOpenSession(userId);
 
   // Load existing messages from this session
   const dbMessages = await prisma.sessionMessage.findMany({
@@ -39,7 +40,7 @@ export default async function ChatPage() {
       : undefined,
   }));
 
-  const masterySnapshot = await getMasterySnapshot(STUDENT_ID);
+  const masterySnapshot = await getMasterySnapshot(userId);
 
   return (
     <ChatClient
