@@ -385,6 +385,12 @@ function ChatClientInner({
               >
                 Top up
               </button>
+              <a
+                href="/billing"
+                className="ml-1 text-[10px] text-stone-500 dark:text-stone-400 hover:text-amber-700 dark:hover:text-amber-400 font-medium underline underline-offset-2 transition-colors"
+              >
+                Billing
+              </a>
             </span>
             <ThemeToggle />
           </div>
