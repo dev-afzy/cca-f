@@ -2,6 +2,7 @@ import "server-only";
 
 import { getStripe } from "@/lib/stripe";
 import { grantCredits } from "@/lib/billing/wallet";
+import { notifyBillingFailure } from "@/lib/alert";
 
 export const runtime = "nodejs";
 
@@ -53,7 +54,7 @@ export async function POST(req: Request): Promise<Response> {
         stripeEventId: event.id,
       });
     } catch (e) {
-      console.error("[billing/webhook]", e);
+      await notifyBillingFailure("stripe webhook grant failed", e);
       return new Response("grant failed", { status: 500 });
     }
   }

@@ -15,6 +15,7 @@ import type { MessageParam } from "@anthropic-ai/sdk/resources/messages";
 import { requireUserIdApi } from "@/lib/current-user";
 import { ensureWallet, chargeTurn, KILL_SWITCH_ON } from "@/lib/billing/wallet";
 import { overDailyUserCap, overGlobalCap } from "@/lib/billing/guards";
+import { notifyBillingFailure } from "@/lib/alert";
 
 function jsonErrorResponse(message: string, status: number) {
   return new Response(JSON.stringify({ error: message }), {
@@ -138,7 +139,7 @@ export async function POST(req: NextRequest) {
           balanceMicros = charge.balanceMicros;
           costMicros = charge.billedMicros;
         } catch (e) {
-          console.error("[billing] chargeTurn failed", e);
+          await notifyBillingFailure(`chargeTurn failed (route=turn, user=${userId})`, e);
         }
 
         const masterySnapshot = await getMasterySnapshot(userId);
