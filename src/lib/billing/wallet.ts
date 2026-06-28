@@ -205,37 +205,55 @@ export async function grantCredits(args: {
     }
   }
 
-  const balanceMicros = await prisma.$transaction(async (tx) => {
-    const wallet = await tx.wallet.findUniqueOrThrow({
-      where: { studentId: userId },
-      select: { id: true },
-    });
+  let balanceMicros: number;
+  try {
+    balanceMicros = await prisma.$transaction(async (tx) => {
+      const wallet = await tx.wallet.findUniqueOrThrow({
+        where: { studentId: userId },
+        select: { id: true },
+      });
 
-    await tx.creditTransaction.create({
-      data: {
-        walletId: wallet.id,
-        studentId: userId,
-        kind,
-        status: "completed",
-        amountPaidCents: amountPaidCents ?? 0,
-        creditsMicros,
-        stripeSessionId,
-        stripeEventId,
-        idempotencyKey,
-      },
-    });
+      await tx.creditTransaction.create({
+        data: {
+          walletId: wallet.id,
+          studentId: userId,
+          kind,
+          status: "completed",
+          amountPaidCents: amountPaidCents ?? 0,
+          creditsMicros,
+          stripeSessionId,
+          stripeEventId,
+          idempotencyKey,
+        },
+      });
 
-    const updated = await tx.wallet.update({
-      where: { id: wallet.id },
-      data: {
-        balanceMicros: { increment: creditsMicros },
-        lifetimeGrantMicros: { increment: creditsMicros },
-      },
-      select: { balanceMicros: true },
-    });
+      const updated = await tx.wallet.update({
+        where: { id: wallet.id },
+        data: {
+          balanceMicros: { increment: creditsMicros },
+          lifetimeGrantMicros: { increment: creditsMicros },
+        },
+        select: { balanceMicros: true },
+      });
 
-    return updated.balanceMicros;
-  });
+      return updated.balanceMicros;
+    });
+  } catch (err) {
+    // A concurrent duplicate delivery passed the pre-check but was caught by
+    // the DB unique index (stripeSessionId / stripeEventId / idempotencyKey).
+    // Treat it as already-applied: re-read the current balance and return.
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === "P2002"
+    ) {
+      const wallet = await prisma.wallet.findUnique({
+        where: { studentId: userId },
+        select: { balanceMicros: true },
+      });
+      return { balanceMicros: wallet?.balanceMicros ?? 0, alreadyApplied: true };
+    }
+    throw err;
+  }
 
   return { balanceMicros, alreadyApplied: false };
 }
