@@ -283,6 +283,13 @@ export async function executeTool(
         const baseWhere = {
           concept: { slug: conceptSlug },
           ...(effDifficulty ? { difficulty: effDifficulty } : {}),
+          // Serve only single-answer questions here. record_attempt accepts one
+          // chosenKey, so a multiple-response item (responseCount > 1) could be
+          // answered correctly and still grade as wrong — penalising mastery for
+          // a right answer. Multiple-response items are exercised in the timed
+          // mocks, which pass a full key set to gradeAnswerSet. Remove this
+          // filter only once record_attempt takes chosenKeys.
+          responseCount: 1,
         };
 
         // Prefer an unseen question. If none and noRepeat is set, DO NOT
