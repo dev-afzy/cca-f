@@ -10,6 +10,7 @@
     "db:reset": "prisma migrate reset --force",
     "db:reset-sprint": "tsx scripts/reset-sprint.ts",
     "db:audit-sessions": "tsx scripts/audit-sessions.ts",
+    "db:backfill-masteries": "tsx scripts/backfill-masteries.ts",
     "validate:content": "tsx scripts/validate-content.ts"
   },
   "prisma": {
