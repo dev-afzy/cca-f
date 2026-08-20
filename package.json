@@ -11,7 +11,8 @@
     "db:reset-sprint": "tsx scripts/reset-sprint.ts",
     "db:audit-sessions": "tsx scripts/audit-sessions.ts",
     "db:backfill-masteries": "tsx scripts/backfill-masteries.ts",
-    "validate:content": "tsx scripts/validate-content.ts"
+    "validate:content": "tsx scripts/validate-content.ts",
+    "test:grading": "tsx --conditions=react-server scripts/check-grading.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -36,6 +37,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "prisma": "^7.8.0",
+    "server-only": "^0.0.1",
     "tailwindcss": "^4",
     "tsx": "^4.22.1",
     "typescript": "^5"
