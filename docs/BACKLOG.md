@@ -88,6 +88,19 @@ unprepared for "select all that apply"-style items, where partial knowledge scor
 **Also newly published in §3:** result reporting is *"Pass/fail with scaled score (100–1,000), plus
 **percent-correct by domain** on the score report"* — our per-domain readout already matches.
 
+### 2a. Follow-up — let the tutor serve multiple-response items too
+
+The `record_attempt` tool takes a single `chosenKey`, so it cannot grade a `responseCount > 1`
+question. As a safety guard, `fetch_question` now filters to `responseCount: 1`
+(`src/lib/tutor/tool-handlers.ts`) — otherwise a student could answer a multi-response checkpoint
+**correctly and still be marked wrong**, docking mastery.
+
+Consequence: multiple-response items are currently practised **only in the timed mocks**, not in the
+23 hours of tutoring checkpoints. To close it, add `chosenKeys?: string[]` to the `record_attempt`
+tool schema (`src/lib/tutor/tools.ts`), pass it to the existing `gradeAnswerSet`, tell the model in
+the tool description to collect all N selections before recording, then drop the `responseCount: 1`
+filter. Moderate change to a tool schema + prompt; not required for mock realism.
+
 ---
 
 ## 3. Refresh curriculum text from exam guide v0.1 → v1.0
