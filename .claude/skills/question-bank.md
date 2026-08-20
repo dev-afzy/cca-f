@@ -222,6 +222,17 @@ A good question will use at least two of these as distractors.
 >
 > **Correct: B.** Descriptions are the primary tool-selection mechanism; enriching them is the low-effort, high-leverage fix that addresses the root cause. A adds token overhead while leaving the root cause — undifferentiated descriptions — in place. C is over-engineered — it bypasses the model's language understanding and adds a brittle keyword layer before simpler fixes were tried. D is a real architectural option, but far more effort than a first step warrants when the immediate defect is description quality. C and D are the over-engineering distractors here.
 
+### Agent SDK Hooks & Data Normalization
+
+> *Scenario:* A logistics agent orchestrates three MCP tools you can't modify: one returns Unix epoch milliseconds and a numeric status code, one returns ISO 8601 timestamps and a string status, and one returns Unix epoch in seconds with its own, misaligned status codes. Processing 40,000 orders/day, the agent starts asserting impossible sequences ("shipped before ordered") because it's comparing timestamps across mismatched units. What fixes this before the release freeze?
+>
+> A) Document each tool's format in the system prompt and ask the model to convert before comparing
+> B) Add a `PostToolUse` hook that normalizes every tool's timestamp and status code to one canonical format before the result reaches the model
+> C) Increase context so the model can see more of each raw payload while reasoning through the conversion
+> D) Stand up a separate normalization microservice all three tools route through
+>
+> **Correct: B.** `PostToolUse` hooks transform tool results *before the model processes them* — the model never needs to learn three formats. A leaves error-prone conversion to per-turn model judgment (probabilistic, not deterministic). C gives the model more inconsistent data to reason over, not less. D is over-engineered relative to a hook that ships in the same release. Companion distractor direction: a hook is not only a gate — it blocks-and-redirects (refund > $500 → human escalation with a structured handoff, not a dead-end deny) — and not every judgment gap should become a hook: when the requirement isn't deterministic compliance (e.g. routing ambiguity from near-identical tool descriptions), the proportionate fix is better descriptions and few-shot examples, not a `PreToolUse` keyword gate.
+
 ### Proportionality: Criteria First
 
 > *Scenario:* Your support agent hits 55% first-contact resolution against an 80% target. Logs show it escalates straightforward cases (standard damage replacements with photo evidence) while attempting complex policy-exception cases itself. What most effectively improves its escalation calibration?

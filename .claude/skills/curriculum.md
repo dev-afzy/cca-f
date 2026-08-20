@@ -23,6 +23,7 @@ The instructor (you) generates the actual teaching content live, using the Child
 - Exam map: 5 domains weighted 27% (Agentic) / 20% (Claude Code) / 20% (Prompts) / 18% (Tool & MCP) / 15% (Context). Questions are framed by 4 scenarios drawn at random from 6 published ones (customer support agent, Claude Code codegen, multi-agent research, developer productivity, CI/CD, structured data extraction).
 - Scoring mechanics: scaled 100–1,000, pass mark 720, pass/fail only, no penalty for guessing — never leave a blank.
 - Distractor literacy: the recurring wrong-answer shapes — model-swap ("switch to Opus"), prompt-as-enforcement, over-engineering (classifiers/routing layers when a criteria fix suffices), more-tokens/more-context.
+- The exam tests four core technologies: Claude Code, the Claude Agent SDK, the Claude API, and MCP.
 - Model family (Haiku/Sonnet/Opus) as background vocabulary only: the exam uses model selection in *distractors*, not as a tested topic. Know the latency/cost/capability tradeoffs so you can recognize when a model swap dodges the structural fix.
 
 **Friction zones:** Treating model choice as a tested topic and memorizing benchmark numbers. Picking "switch to Opus" under pressure. Studying by domain weight alone instead of practicing scenario judgment.
@@ -96,7 +97,7 @@ The instructor (you) generates the actual teaching content live, using the Child
 **Topics:**
 - Anatomy of a tool definition (`name`, `description`, `input_schema`).
 - The two-message round-trip pattern: assistant emits `tool_use`, your code runs the tool, you reply with `tool_result`, assistant continues.
-- `stop_reason: tool_use` vs `stop_reason: end_turn` — the agentic loop terminates on the structured field, not on text content.
+- `stop_reason: tool_use` vs `stop_reason: end_turn` — the agentic loop terminates on the structured field, not on text content (this is the loop the Claude Agent SDK runs for you in production).
 - Error reporting via `is_error: true` inside `tool_result`.
 
 **Friction zones:** Parsing text to decide when to call a tool. Forgetting to send tool results back. Sending malformed tool_result blocks. Not handling tool errors.
@@ -222,7 +223,7 @@ The instructor (you) generates the actual teaching content live, using the Child
 - Why workers don't share each other's context (and why that's a feature).
 - Parallel vs sequential dispatch.
 - Simple classification routing ("which queue does this belong to?") is the degenerate single-level case of this pattern — a coordinator that only routes. (Absorbs the old Router hour.)
-- The coordinator's iterative refinement loop: evaluate synthesis output for gaps → re-delegate targeted queries to search/analysis workers → re-synthesize until coverage is sufficient.
+- The coordinator's iterative refinement loop: evaluate synthesis output for gaps → re-delegate targeted queries to search/analysis workers → re-synthesize until coverage is sufficient (this agentic loop is what the Claude Agent SDK gives you out of the box).
 - Dynamic subagent selection: analyze the query and invoke only the subagents it needs, instead of always running the full pipeline.
 - Structured handoff summaries for human escalation: customer ID, root cause, amounts, recommended action — the human has no access to the transcript.
 
@@ -307,6 +308,10 @@ The instructor (you) generates the actual teaching content live, using the Child
 
 **Topics:**
 - `PreToolUse` and `PostToolUse` hooks — programmatic interception.
+- `PostToolUse` as a **data-normalization layer**, not only a gate: transform tool results *before the model sees them*.
+- Heterogeneous formats across MCP tools — Unix epoch vs ISO 8601 timestamps, numeric status codes vs strings — normalized in one hook instead of teaching the model to handle every variant.
+- Tool-call interception that **blocks a policy-violating action and redirects** (refund > $500 → human escalation), rather than merely refusing.
+- Hooks give **deterministic** guarantees; prompt instructions give **probabilistic** compliance — say which the business rule requires.
 - Tool gating: blocking `process_refund` until `verify_identity` has succeeded.
 - Output filters / classifiers as a final layer.
 - Why programmatic enforcement beats prompt-based "never do X" rules.
@@ -318,9 +323,9 @@ The instructor (you) generates the actual teaching content live, using the Child
 - Multiple customer matches → ask for additional identifiers; never pick by heuristic.
 - The proportionality principle: hooks for rules that must NEVER break (deterministic compliance); prompt criteria for judgment calibration. Sentiment and self-reported confidence are unreliable proxies for both.
 
-**Friction zones:** Reaching for system prompt wording when a hook is the right answer. Stacking only one layer. Not knowing where in the lifecycle the hook fires. Over-correcting into "every fix must be a hook" — the exam also punishes over-engineering when explicit criteria would do.
+**Friction zones:** Reaching for system prompt wording when a hook is the right answer. Stacking only one layer. Not knowing where in the lifecycle the hook fires. Over-correcting into "every fix must be a hook" — the exam also punishes over-engineering when explicit criteria would do. Assuming a hook can only block, never transform. Normalizing in the prompt ("the dates may be in different formats") instead of in a `PostToolUse` hook.
 
-**Analogy seed:** Telling your kid "don't touch the stove" is guidance. Installing a child lock is enforcement. Guidance helps; enforcement guarantees.
+**Analogy seed:** Telling your kid "don't touch the stove" is guidance. Installing a child lock is enforcement. Guidance helps; enforcement guarantees. A `PostToolUse` hook is the translator who converts every supplier's invoice into one currency before it reaches the accountant — the accountant never learns six formats.
 
 ---
 
@@ -376,7 +381,7 @@ The instructor (you) generates the actual teaching content live, using the Child
 - Context isolation: subagents have their own context and do not share state directly — a feature, not a bug.
 - Passing explicit, scoped context to each subagent vs. dumping the coordinator's full history (context pollution).
 - `fork_session` for isolated parallel exploration without polluting the main context.
-- `AgentDefinition` configuration: each subagent type gets a description, its own system prompt, and tool restrictions — the description is how the coordinator picks it.
+- `AgentDefinition` configuration (Claude Agent SDK): each subagent type gets a description, its own system prompt, and tool restrictions — the description is how the coordinator picks it.
 - Structured data formats separating content from metadata (source URLs, document names, page numbers) when passing context between agents, so attribution survives.
 - Coordinator prompts that specify research goals and quality criteria — not step-by-step procedures — so subagents can adapt.
 
@@ -392,7 +397,7 @@ The instructor (you) generates the actual teaching content live, using the Child
 
 **Topics:**
 - `--resume` to continue a previous session with its preserved context (not a pasted summary).
-- `fork_session` to branch for exploration without polluting the main line.
+- `fork_session` to branch for exploration without polluting the main line (both are Claude Agent SDK session-management primitives).
 - Named sessions for organized, findable multi-session workflows.
 - Stale context: long-running sessions accumulate superseded facts; detect drift and re-ground current state (compaction / fresh read) instead of trusting the model to notice.
 - Prompt chaining (fixed, predictable steps) vs. dynamic adaptive decomposition (next step depends on findings).

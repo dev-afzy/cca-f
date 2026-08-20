@@ -66,6 +66,7 @@ Track each concept area as a percentage. Update after every session that touched
 - CLAUDE.md Hierarchy & Path-Scoped Rules: <%>
 - Slash Commands, Skills & Plan Mode: <%>
 - Guardrails (Hooks, Tool Gating, Escalation): <%>
+- Agent SDK Hooks & Data Normalization: <%>
 - Claude Code in CI/CD & Iterative Refinement: <%>
 - Prompt Engineering: Explicit Criteria & Few-Shot: <%>
 

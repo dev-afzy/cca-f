@@ -27,6 +27,7 @@ export const CONCEPT_SEED: ConceptSeed[] = [
   { slug: "claude-md-rules",            name: "CLAUDE.md Hierarchy & Path-Scoped Rules",              week: 3, domain: "Claude Code", sortOrder: 210 },
   { slug: "skills-commands-planmode",   name: "Slash Commands, Skills & Plan Mode",                   week: 3, domain: "Claude Code", sortOrder: 220 },
   { slug: "guardrails",                 name: "Guardrails (Hooks, Tool Gating, Escalation)",          week: 3, domain: "Agentic",     sortOrder: 230 },
+  { slug: "agent-sdk-hooks",            name: "Agent SDK Hooks & Data Normalization",                 week: 3, domain: "Agentic",     sortOrder: 235 },
   { slug: "cicd-refinement",            name: "Claude Code in CI/CD & Iterative Refinement",          week: 3, domain: "Claude Code", sortOrder: 240 },
   { slug: "prompt-engineering",         name: "Prompt Engineering: Explicit Criteria & Few-Shot",     week: 3, domain: "Prompts",     sortOrder: 250 },
   // Week 4 — Agentic deep-dive & exam sim
