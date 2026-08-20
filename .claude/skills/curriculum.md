@@ -223,7 +223,7 @@ The instructor (you) generates the actual teaching content live, using the Child
 - Why workers don't share each other's context (and why that's a feature).
 - Parallel vs sequential dispatch.
 - Simple classification routing ("which queue does this belong to?") is the degenerate single-level case of this pattern — a coordinator that only routes. (Absorbs the old Router hour.)
-- The coordinator's iterative refinement loop: evaluate synthesis output for gaps → re-delegate targeted queries to search/analysis workers → re-synthesize until coverage is sufficient (this agentic loop is what the Claude Agent SDK gives you out of the box).
+- The coordinator's iterative refinement loop: evaluate synthesis output for gaps → re-delegate targeted queries to search/analysis workers → re-synthesize until coverage is sufficient (the Claude Agent SDK gives you the loop mechanics — tool-call cycle, `stop_reason`, subagent spawning — but this refinement pattern is one you architect on top of them, not a built-in feature).
 - Dynamic subagent selection: analyze the query and invoke only the subagents it needs, instead of always running the full pipeline.
 - Structured handoff summaries for human escalation: customer ID, root cause, amounts, recommended action — the human has no access to the transcript.
 
@@ -310,7 +310,7 @@ The instructor (you) generates the actual teaching content live, using the Child
 - `PreToolUse` and `PostToolUse` hooks — programmatic interception.
 - `PostToolUse` as a **data-normalization layer**, not only a gate: transform tool results *before the model sees them*.
 - Heterogeneous formats across MCP tools — Unix epoch vs ISO 8601 timestamps, numeric status codes vs strings — normalized in one hook instead of teaching the model to handle every variant.
-- Tool-call interception that **blocks a policy-violating action and redirects** (refund > $500 → human escalation), rather than merely refusing.
+- `PreToolUse` — the *outgoing*-call interception point — **blocks a policy-violating action and redirects** (refund > $500 → human escalation), rather than merely refusing. Note the split: `PreToolUse` gates what the agent is about to do; `PostToolUse` reshapes what came back.
 - Hooks give **deterministic** guarantees; prompt instructions give **probabilistic** compliance — say which the business rule requires.
 - Tool gating: blocking `process_refund` until `verify_identity` has succeeded.
 - Output filters / classifiers as a final layer.
