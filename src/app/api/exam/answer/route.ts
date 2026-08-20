@@ -12,13 +12,40 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { attemptId, questionId, chosenKey } = (await req.json()) as {
+    const { attemptId, questionId, chosenKey, chosenKeys } = (await req.json()) as {
       attemptId?: number;
       questionId?: number;
       chosenKey?: string;
+      chosenKeys?: string[];
     };
-    if (typeof attemptId !== "number" || typeof questionId !== "number" || !isOptionKey(chosenKey)) {
+
+    if (typeof attemptId !== "number" || typeof questionId !== "number") {
       return NextResponse.json({ error: "invalid body" }, { status: 400 });
+    }
+
+    // Multiple-response path: chosenKeys must be a non-empty array of up to
+    // 4 distinct option keys. Single-answer path (chosenKey) is unchanged.
+    let data: { chosenKey?: string; chosenKeys?: string };
+    if (chosenKeys !== undefined) {
+      const valid =
+        Array.isArray(chosenKeys) &&
+        chosenKeys.length > 0 &&
+        chosenKeys.length <= 4 &&
+        chosenKeys.every((k) => isOptionKey(k)) &&
+        new Set(chosenKeys).size === chosenKeys.length;
+      if (!valid) {
+        return NextResponse.json({ error: "invalid body" }, { status: 400 });
+      }
+      data = { chosenKeys: JSON.stringify(chosenKeys) };
+      if (chosenKeys.length === 1) {
+        // Keep single-answer analytics/back-compat intact.
+        data.chosenKey = chosenKeys[0];
+      }
+    } else {
+      if (!isOptionKey(chosenKey)) {
+        return NextResponse.json({ error: "invalid body" }, { status: 400 });
+      }
+      data = { chosenKey };
     }
 
     const attempt = await prisma.examAttempt.findFirst({
@@ -32,7 +59,7 @@ export async function POST(req: Request) {
 
     const result = await prisma.examAnswer.updateMany({
       where: { attemptId, questionId },
-      data: { chosenKey },
+      data,
     });
 
     if (result.count === 0) {

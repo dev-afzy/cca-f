@@ -22,7 +22,7 @@ export default async function ExamRunnerPage({
     include: {
       answers: {
         orderBy: { orderIndex: "asc" },
-        include: { question: { select: { stem: true, options: true } } },
+        include: { question: { select: { stem: true, options: true, responseCount: true } } },
       },
     },
   });
@@ -38,12 +38,25 @@ export default async function ExamRunnerPage({
       const canonicalKey = perm ? perm[pos] : pos;
       options[pos] = canonical[canonicalKey];
     }
+    // chosenKeys holds the student's shuffled-position picks for
+    // multiple-response questions (null for single-answer / unanswered).
+    let chosenKeys: string[] | null = null;
+    if (a.chosenKeys) {
+      try {
+        const parsed = JSON.parse(a.chosenKeys) as unknown;
+        if (Array.isArray(parsed)) chosenKeys = parsed.map((k) => String(k));
+      } catch {
+        chosenKeys = null;
+      }
+    }
     return {
       orderIndex: a.orderIndex,
       questionId: a.questionId,
       stem: a.question.stem,
       options,
       chosen: a.chosenKey,
+      responseCount: a.question.responseCount,
+      chosenKeys,
     };
   });
 
