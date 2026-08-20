@@ -54,6 +54,9 @@ async function main() {
       where: { slug: q.conceptSlug },
     });
 
+    const responseCount = q.responseCount ?? 1;
+    const correctKeys = q.correctKeys ? JSON.stringify(q.correctKeys) : null;
+
     await prisma.question.upsert({
       where: { slug: q.slug },
       create: {
@@ -63,6 +66,8 @@ async function main() {
         stem: q.stem,
         options: JSON.stringify(q.options),
         correctKey: q.correctKey,
+        responseCount,
+        correctKeys,
         distractorReasons: JSON.stringify(q.distractorReasons),
         source: "hand-authored",
         difficulty: q.difficulty ?? "warmup",
@@ -73,6 +78,8 @@ async function main() {
         stem: q.stem,
         options: JSON.stringify(q.options),
         correctKey: q.correctKey,
+        responseCount,
+        correctKeys,
         distractorReasons: JSON.stringify(q.distractorReasons),
         difficulty: q.difficulty ?? "warmup",
       },

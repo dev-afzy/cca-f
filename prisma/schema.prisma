@@ -124,6 +124,13 @@ model Question {
   stem              String
   options           String
   correctKey        String
+  // How many responses the student must select. 1 (default) = single-answer,
+  // matches the existing correctKey path. >1 = multiple-response; grade
+  // against correctKeys instead (see src/lib/exam/score.ts correctKeySet).
+  responseCount     Int      @default(1)
+  // JSON array of canonical letters, e.g. ["A","C"]. NULL falls back to
+  // [correctKey] for single-answer questions.
+  correctKeys       String?
   distractorReasons String
   source            String   @default("hand-authored")
   difficulty        String   @default("warmup")
@@ -198,6 +205,9 @@ model ExamAnswer {
   orderIndex  Int
   permutation String
   chosenKey   String?
+  // JSON array of the student's shuffled-position letters, e.g. ["A","C"].
+  // NULL falls back to [chosenKey] for single-answer questions.
+  chosenKeys  String?
   correct     Boolean     @default(false)
   attempt     ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
   question    Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)

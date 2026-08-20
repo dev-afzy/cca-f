@@ -108,6 +108,37 @@ for (const [dom, min] of Object.entries(HARD_DOMAIN_MIN)) {
 
 console.log(`Hard-tier questions: ${hardTotal} total — ${JSON.stringify(hardByDomain)}`);
 
+// 10. Multiple-response shape: every question has responseCount >= 1; a
+// responseCount > 1 question must carry correctKeys with exactly
+// responseCount entries, each one of the question's own option keys, with
+// no duplicates.
+for (const q of QUESTION_SEED) {
+  const responseCount = q.responseCount ?? 1;
+  if (responseCount < 1) {
+    errors.push(`question "${q.slug}" has responseCount ${responseCount} < 1`);
+    continue;
+  }
+  if (responseCount > 1) {
+    const keys = q.correctKeys;
+    if (!keys || keys.length !== responseCount) {
+      errors.push(
+        `question "${q.slug}" responseCount ${responseCount} requires correctKeys.length === ${responseCount}, got ${keys ? keys.length : "undefined"}`
+      );
+    } else {
+      const optionKeys = new Set(Object.keys(q.options));
+      for (const k of keys) {
+        if (!optionKeys.has(k)) {
+          errors.push(`question "${q.slug}" correctKeys has key "${k}" not in options`);
+        }
+      }
+      const dupeKeys = [...new Set(keys.filter((k, i) => keys.indexOf(k) !== i))];
+      if (dupeKeys.length) {
+        errors.push(`question "${q.slug}" correctKeys has duplicate keys: ${dupeKeys.join(", ")}`);
+      }
+    }
+  }
+}
+
 if (errors.length) {
   console.error(`Content validation FAILED (${errors.length}):`);
   for (const e of errors) console.error(`  - ${e}`);

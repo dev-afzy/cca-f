@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { assertValidSlug } from "@/lib/concept-slugs";
 import { nudgeMastery } from "./mastery";
 import { grade } from "./grade";
+import { gradeAnswerSet } from "@/lib/exam/score";
 import { getOrCreateOpenSession, closeSession } from "./session";
 import { buildLedgerSnapshot } from "./ledger-snapshot";
 import {
@@ -394,12 +395,16 @@ export async function executeTool(
         // wins — model behavior is fetch → present → answer in tight order, so
         // staleness is not a real concern.
         let permutation = null;
+        let permutationJson = "{}";
         if (ctx.sessionId) {
           const fetch = await prisma.questionFetch.findFirst({
             where: { sessionId: ctx.sessionId, questionId },
             orderBy: { createdAt: "desc" },
           });
-          if (fetch) permutation = parsePermutation(fetch.permutation);
+          if (fetch) {
+            permutation = parsePermutation(fetch.permutation);
+            permutationJson = fetch.permutation;
+          }
         }
 
         const canonicalChosen = permutation
@@ -407,6 +412,21 @@ export async function executeTool(
           : chosenKey;
 
         const gradeResult = grade(question, canonicalChosen);
+        // The tutor's record_attempt tool only ever supplies one chosen
+        // letter (no multi-select checkpoint UI yet). Re-grade the
+        // correctness bit through the same exact-set helper the exam uses
+        // (src/lib/exam/score.ts) so a responseCount > 1 question can never
+        // be mis-graded here: wrapping the lone chosenKey in a 1-element
+        // array can never set-match a correctKeys array of 2+, so it
+        // correctly grades incorrect rather than silently comparing one
+        // letter against what is really a partial answer. For a
+        // single-answer question (responseCount 1, correctKeys null) this
+        // is equivalent to the grade() call above.
+        gradeResult.correct = gradeAnswerSet(
+          question,
+          chosenKey ? [chosenKey] : null,
+          permutationJson
+        );
 
         await prisma.questionAttempt.create({
           data: {

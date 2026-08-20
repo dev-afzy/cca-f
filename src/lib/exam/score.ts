@@ -1,4 +1,3 @@
-import { grade } from "@/lib/tutor/grade";
 import { parsePermutation, translateToCanonical } from "@/lib/tutor/shuffle";
 
 export const READY_OVERALL = 90;
@@ -14,22 +13,78 @@ export type Readiness = {
   verdict: Verdict;
 };
 
+// Same normalization convention as grade(): strip whitespace, uppercase, take
+// first char only (guards against "A." or "a)" style input).
+function normalizeKey(key: string): string {
+  return key.trim().toUpperCase().charAt(0);
+}
+
 /**
- * Grade one answer. chosenKeyShuffled is the letter the student saw/clicked;
- * translate it back to canonical via the stored permutation before grading.
- * null (unanswered) is wrong.
+ * The set of canonical letters that count as correct for a question. Single-
+ * answer questions (the common case) have exactly one: [correctKey].
+ * Multiple-response questions carry an explicit correctKeys JSON array.
+ * Falls back to [correctKey] when correctKeys is absent, empty, or malformed
+ * so existing single-answer questions are unaffected. Sorted for stable set
+ * comparison.
+ */
+export function correctKeySet(q: {
+  correctKey: string;
+  correctKeys?: string | null;
+}): string[] {
+  let keys: string[] = [q.correctKey];
+  if (q.correctKeys) {
+    try {
+      const parsed = JSON.parse(q.correctKeys) as unknown;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        keys = parsed.map((k) => String(k));
+      }
+    } catch {
+      // malformed JSON — fall back to [correctKey]
+    }
+  }
+  return keys.map(normalizeKey).sort();
+}
+
+/**
+ * Grade a (possibly multiple-response) answer. chosenKeysShuffled are the
+ * letters the student saw/clicked; each is translated back to canonical via
+ * the stored permutation before comparing. Requires an exact set match
+ * against correctKeySet(question) — no partial credit. null/empty is wrong.
+ * Duplicate chosen keys are de-duplicated before comparison so they can't
+ * manufacture a false match against a larger correct set.
+ */
+export function gradeAnswerSet(
+  question: { correctKey: string; correctKeys?: string | null },
+  chosenKeysShuffled: string[] | null,
+  permutationJson: string
+): boolean {
+  if (!chosenKeysShuffled || chosenKeysShuffled.length === 0) return false;
+  const perm = parsePermutation(permutationJson);
+  const canonicalChosen = chosenKeysShuffled.map((k) =>
+    perm ? translateToCanonical(k, perm) ?? k : k
+  );
+  const normalizedChosen = [...new Set(canonicalChosen.map(normalizeKey))].sort();
+  const expected = correctKeySet(question);
+  if (normalizedChosen.length !== expected.length) return false;
+  return normalizedChosen.every((k, i) => k === expected[i]);
+}
+
+/**
+ * Grade one single-answer answer. chosenKeyShuffled is the letter the student
+ * saw/clicked; translate it back to canonical via the stored permutation
+ * before grading. null (unanswered) is wrong. Thin wrapper over
+ * gradeAnswerSet so existing single-answer callers are unaffected.
  */
 export function gradeAnswer(
-  question: { correctKey: string; distractorReasons: string },
+  question: { correctKey: string; correctKeys?: string | null; distractorReasons: string },
   chosenKeyShuffled: string | null,
   permutationJson: string
 ): boolean {
-  if (!chosenKeyShuffled) return false;
-  const perm = parsePermutation(permutationJson);
-  const canonicalChosen = perm
-    ? translateToCanonical(chosenKeyShuffled, perm) ?? chosenKeyShuffled
-    : chosenKeyShuffled;
-  return grade(question, canonicalChosen).correct;
+  return gradeAnswerSet(
+    question,
+    chosenKeyShuffled ? [chosenKeyShuffled] : null,
+    permutationJson
+  );
 }
 
 export function summarize(graded: GradedAnswer[]): {

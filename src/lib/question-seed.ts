@@ -7,6 +7,12 @@ export type QuestionSeed = {
   correctKey: string;
   distractorReasons: Record<string, string>;
   difficulty?: "warmup" | "hard";
+  // How many responses to select. Omitted/1 = single-answer (default,
+  // graded via correctKey). >1 = multiple-response — requires correctKeys
+  // with exactly responseCount canonical letters. Type-only for now; no
+  // multi-response questions are authored in this task.
+  responseCount?: number;
+  correctKeys?: string[];
 };
 
 export const QUESTION_SEED: QuestionSeed[] = [
