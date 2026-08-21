@@ -189,7 +189,7 @@ export const TUTOR_TOOLS: Tool[] = [
   {
     name: "advance_hour",
     description:
-      "Advance the student to the next hour. Use this after completing diagnostic (to move from Hour 0 to Hour 1) or after a session is complete.",
+      "Advance the student to the next hour. Use after the diagnostic (Hour 0 to 1) or once a session is complete. PRECONDITION, enforced: the current hour must already have its recorded checkpoints — 3 graded answers for a normal hour, 10 for the mini-mock hours 7 and 14, and a completed 60-question mock for hours 22 and 23. If the requirement is unmet this returns advanced:false with how many remain; run them via fetch_question + record_attempt and call again. A wrong answer still counts.",
     input_schema: {
       type: "object",
       properties: {},

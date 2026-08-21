@@ -483,7 +483,63 @@ export async function executeTool(
           where: { id: ctx.studentId },
           select: { currentHour: true },
         });
-        const newHour = Math.min((student?.currentHour ?? 0) + 1, 23);
+        const hour = student?.currentHour ?? 0;
+
+        // The hour advances on recorded evidence, never on the model's own
+        // judgement that the material was covered. Instructing the tutor to
+        // run a checkpoint is probabilistic compliance — the same failure this
+        // curriculum teaches in Hour 17 — and in practice it skipped the
+        // checkpoint in 13 of 23 hours, which is how a student reaches Hour 23
+        // with 34 graded answers and a 90% mastery reading. A wrong answer
+        // still counts: the point is measurement, not success.
+        const MINI_MOCK_HOURS = [7, 14];
+        const FULL_MOCK_HOURS = [22, 23];
+
+        if (FULL_MOCK_HOURS.includes(hour)) {
+          // For the mock hours the 60-question timed exam IS the checkpoint.
+          // Cumulative so the requirement stays monotonic without tracking
+          // when each hour began: Hour 22 needs the first mock, 23 the second.
+          const need = hour === 22 ? 1 : 2;
+          const have = await prisma.examAttempt.count({
+            where: {
+              studentId: ctx.studentId,
+              status: { in: ["submitted", "expired"] },
+            },
+          });
+          if (have < need) {
+            return {
+              content: JSON.stringify({
+                advanced: false,
+                reason: "mock_required",
+                hour,
+                have,
+                need,
+                message: `Hour ${hour} requires ${need} completed full mock exam(s); ${have} recorded. Have the student run the 60-question timed mock, then call advance_hour again.`,
+              }),
+              isError: false,
+            };
+          }
+        } else {
+          const need = MINI_MOCK_HOURS.includes(hour) ? 10 : 3;
+          const have = await prisma.questionAttempt.count({
+            where: { studentId: ctx.studentId, hour },
+          });
+          if (have < need) {
+            return {
+              content: JSON.stringify({
+                advanced: false,
+                reason: "checkpoints_required",
+                hour,
+                have,
+                need,
+                message: `Hour ${hour} has ${have} of ${need} recorded checkpoints. Run the remaining ${need - have} with fetch_question + record_attempt before advancing — a wrong answer still counts as evidence.`,
+              }),
+              isError: false,
+            };
+          }
+        }
+
+        const newHour = Math.min(hour + 1, 23);
         await prisma.student.update({
           where: { id: ctx.studentId },
           data: { currentHour: newHour },
