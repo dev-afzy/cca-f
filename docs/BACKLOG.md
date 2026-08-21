@@ -59,7 +59,7 @@ architecture/platform engineering + 6+ months hands-on**.
 
 ---
 
-## 2. ✅ CONFIRMED DEFECT — the bank models the wrong item format (multiple-response)
+## 2. ✅ DONE (2026-08-21) — multiple-response support shipped
 
 **Resolved 2026-08-20** by extracting §3 of the v1.0 Foundations guide. Verbatim:
 
@@ -75,7 +75,7 @@ substantive content change the domain/task-statement diff could not see.
 both 60-question mocks train the wrong format. A candidate practising only single-answer items is
 unprepared for "select all that apply"-style items, where partial knowledge scores zero.
 
-**Fix (spans schema → engine → bank → UI):**
+**Shipped:** schema (`responseCount`/`correctKeys`/`chosenKeys`, migration applied) · exact-set grading via `gradeAnswerSet` with per-key permutation translation · `npm run test:grading` (27 cases) · checkbox UI with "Select N" gating · 10 items across all five domains (~4.6 surface per 60-question mock) · `fetch_question` guarded to single-answer. Original plan below, for reference:
 1. `prisma/schema.prisma` — `Question.correctKeys String` (JSON array) or a `responseCount Int`;
    `ExamAnswer.chosenKeys`. Additive migration + keep single-answer as the 1-element case.
 2. `src/lib/exam/score.ts` / `gradeAnswer` — exact-set match (no partial credit unless confirmed).
@@ -87,6 +87,16 @@ unprepared for "select all that apply"-style items, where partial knowledge scor
 
 **Also newly published in §3:** result reporting is *"Pass/fail with scaled score (100–1,000), plus
 **percent-correct by domain** on the score report"* — our per-domain readout already matches.
+
+
+### 2b. Follow-up — options are capped at four (A–D), so "select 3" is weak
+
+`Question.options` is a JSON `{A,B,C,D}` object and the validator/UI assume exactly A–D. With four
+options a `responseCount: 3` item leaves only **one** wrong answer, which is close to free marks — so
+all 10 authored items use `responseCount: 2` (two correct, two defensible distractors). The real exam
+almost certainly pairs select-3 items with five or six options. Supporting that means widening the
+options shape, the shuffle/permutation helpers, `isOptionKey`, the validator and the runner's option
+rendering. Worth doing before relying on select-3 realism.
 
 ### 2a. Follow-up — let the tutor serve multiple-response items too
 
