@@ -12,20 +12,21 @@ import {
   type CanonicalOptions,
 } from "@/lib/tutor/shuffle";
 import { DOMAIN_LABELS } from "@/lib/domains";
-
-const STUDENT_ID = "default";
+import { requireUserId } from "@/lib/current-user";
 
 export default async function ExamResultPage({
   params,
 }: {
   params: Promise<{ attemptId: string }>;
 }) {
+  const userId = await requireUserId();
+
   const { attemptId: attemptIdStr } = await params;
   const attemptId = Number(attemptIdStr);
   if (!Number.isFinite(attemptId)) redirect("/exam");
 
   const attempt = await prisma.examAttempt.findFirst({
-    where: { id: attemptId, studentId: STUDENT_ID },
+    where: { id: attemptId, studentId: userId },
     include: {
       answers: {
         orderBy: { orderIndex: "asc" },
@@ -78,7 +79,7 @@ export default async function ExamResultPage({
 
         <section className="text-center space-y-2">
           <p className="text-xs uppercase tracking-widest text-stone-400">Result</p>
-          <h1 className="text-5xl font-bold" style={{ fontFamily: "Georgia, serif" }}>
+          <h1 className="text-5xl font-bold">
             {readiness.overallPct}%
           </h1>
           <p className={`text-sm font-medium ${readiness.verdict.ready ? "text-emerald-700 dark:text-emerald-400" : "text-amber-700 dark:text-amber-400"}`}>

@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import MessageBubble from "./MessageBubble";
 import MasterySidebar from "./MasterySidebar";
 import OptionPicker, { parseOptions } from "./OptionPicker";
 import ThemeToggle from "../ThemeToggle";
+import TopUpModal from "./TopUpModal";
 import type { MasterySnapshot } from "@/lib/types";
 
 type StreamEvent =
@@ -21,6 +22,8 @@ type StreamEvent =
       toolsCalled: string[];
       currentHour: number;
       stoppedAt: "end_turn" | "stop_sequence" | "iteration_cap";
+      balanceMicros?: number;
+      costMicros?: number;
     }
   | { type: "error"; message: string };
 
@@ -77,15 +80,20 @@ type ChatClientProps = {
   }>;
   initialMastery: MasterySnapshot;
   studentName: string;
+  initialBalanceMicros: number;
+  signOutSlot?: React.ReactNode;
 };
 
 function ChatClientInner({
   initialMessages,
   initialMastery,
   studentName,
+  initialBalanceMicros,
+  signOutSlot,
 }: ChatClientProps) {
   const searchParams = useSearchParams();
   const showDebug = searchParams.get("debug") === "1";
+  const router = useRouter();
 
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
@@ -94,6 +102,8 @@ function ChatClientInner({
   const [mastery, setMastery] = useState<MasterySnapshot>(initialMastery);
   const [currentHour, setCurrentHour] = useState(initialMastery.currentHour);
   const [error, setError] = useState<string | null>(null);
+  const [balanceMicros, setBalanceMicros] = useState(initialBalanceMicros);
+  const [topUp, setTopUp] = useState<{ open: boolean; reason?: string }>({ open: false });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -186,6 +196,9 @@ function ChatClientInner({
         });
         setMastery(event.masterySnapshot);
         setCurrentHour(event.currentHour);
+        if (typeof event.balanceMicros === "number") {
+          setBalanceMicros(event.balanceMicros);
+        }
       } else if (event.type === "error") {
         throw new Error(event.message);
       }
@@ -216,6 +229,22 @@ function ChatClientInner({
 
       if (!res.ok || !res.body) {
         const errBody = (await res.json().catch(() => ({ error: res.statusText }))) as { error?: string };
+        if (res.status === 402) {
+          // Out of credits — open top-up modal, clean up optimistic bubbles
+          setMessages((prev) => prev.slice(0, -2));
+          setIsLoading(false);
+          inputRef.current?.focus();
+          setTopUp({ open: true, reason: "You're out of credits — top up to keep going." });
+          return;
+        }
+        if (res.status === 429) {
+          // Daily cap hit — open top-up modal, clean up optimistic bubbles
+          setMessages((prev) => prev.slice(0, -2));
+          setIsLoading(false);
+          inputRef.current?.focus();
+          setTopUp({ open: true, reason: "Daily limit reached — try again tomorrow." });
+          return;
+        }
         throw new Error(errBody.error ?? `HTTP ${res.status}`);
       }
 
@@ -275,6 +304,30 @@ function ChatClientInner({
       const res = await fetch("/api/turn/retry", { method: "POST" });
       if (!res.ok || !res.body) {
         const errBody = (await res.json().catch(() => ({ error: res.statusText }))) as { error?: string };
+        if (res.status === 402) {
+          // Out of credits — open top-up modal, remove the empty assistant placeholder retry added
+          setMessages((prev) =>
+            prev[prev.length - 1]?.role === "assistant" && prev[prev.length - 1].content === ""
+              ? prev.slice(0, -1)
+              : prev
+          );
+          setIsLoading(false);
+          inputRef.current?.focus();
+          setTopUp({ open: true, reason: "You're out of credits — top up to keep going." });
+          return;
+        }
+        if (res.status === 429) {
+          // Daily cap hit — open top-up modal, remove the empty assistant placeholder retry added
+          setMessages((prev) =>
+            prev[prev.length - 1]?.role === "assistant" && prev[prev.length - 1].content === ""
+              ? prev.slice(0, -1)
+              : prev
+          );
+          setIsLoading(false);
+          inputRef.current?.focus();
+          setTopUp({ open: true, reason: "Daily limit reached — try again tomorrow." });
+          return;
+        }
         throw new Error(errBody.error ?? `HTTP ${res.status}`);
       }
       await consumeStream(res.body);
@@ -289,11 +342,22 @@ function ChatClientInner({
   const handleEndSession = async () => {
     if (isEnding) return;
     setIsEnding(true);
+    setError(null);
     try {
-      await fetch("/api/session/end", { method: "POST" });
-    } catch {
-      // ignore
-    } finally {
+      const res = await fetch("/api/session/end", { method: "POST" });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error || `End session failed (${res.status})`);
+      }
+      // Success: the session is marked ended in the DB (no data is deleted).
+      // Navigate to the ledger so this session — and every prior one — stays
+      // visible for reference. Returning to /chat starts a fresh session.
+      router.push("/ledger");
+    } catch (e) {
+      // Surface failures instead of swallowing them, and re-enable the button
+      // so the user can retry. On success we navigate away, so isEnding stays
+      // true until the route changes.
+      setError(e instanceof Error ? e.message : String(e));
       setIsEnding(false);
     }
   };
@@ -310,7 +374,26 @@ function ChatClientInner({
               {studentName} &middot; Hour {currentHour} / 23
             </p>
           </div>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-xs text-stone-600 dark:text-stone-300">
+              <span className="text-amber-600 dark:text-amber-400 font-medium">
+                ${(balanceMicros / 1e6).toFixed(2)}
+              </span>
+              <button
+                onClick={() => setTopUp({ open: true })}
+                className="ml-1 text-[10px] text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 font-medium underline underline-offset-2 transition-colors"
+              >
+                Top up
+              </button>
+              <a
+                href="/billing"
+                className="ml-1 text-[10px] text-stone-500 dark:text-stone-400 hover:text-amber-700 dark:hover:text-amber-400 font-medium underline underline-offset-2 transition-colors"
+              >
+                Billing
+              </a>
+            </span>
+            <ThemeToggle />
+          </div>
         </div>
 
         {/* Message list */}
@@ -431,6 +514,13 @@ function ChatClientInner({
         snapshot={mastery}
         onEndSession={() => void handleEndSession()}
         isEnding={isEnding}
+        signOutSlot={signOutSlot}
+      />
+
+      <TopUpModal
+        open={topUp.open}
+        reason={topUp.reason}
+        onClose={() => setTopUp({ open: false })}
       />
     </div>
   );

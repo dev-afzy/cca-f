@@ -3,13 +3,14 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { readinessFrom } from "@/lib/exam/score";
+import { requireUserId } from "@/lib/current-user";
 import StartExamButton from "./StartExamButton";
 
-const STUDENT_ID = "default";
-
 export default async function ExamStartPage() {
+  const userId = await requireUserId();
+
   const last = await prisma.examAttempt.findFirst({
-    where: { studentId: STUDENT_ID, status: { in: ["submitted", "expired"] } },
+    where: { studentId: userId, status: { in: ["submitted", "expired"] } },
     orderBy: { submittedAt: "desc" },
   });
   const lastReadiness = last
@@ -20,7 +21,7 @@ export default async function ExamStartPage() {
     <main className="min-h-screen bg-stone-50 dark:bg-stone-950 flex items-center justify-center px-6">
       <div className="max-w-lg w-full space-y-6 text-center">
         <Link href="/" className="text-xs text-stone-400 hover:underline">← Home</Link>
-        <h1 className="text-3xl font-bold text-stone-900 dark:text-stone-100" style={{ fontFamily: "Georgia, serif" }}>
+        <h1 className="text-3xl font-bold text-stone-900 dark:text-stone-100">
           Mock Exam
         </h1>
         <ul className="text-sm text-stone-600 dark:text-stone-300 space-y-1">

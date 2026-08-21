@@ -37,6 +37,29 @@ The real exam is harder than this app's warm-up tier. A generated hard question 
 4. A stem that describes **symptoms and constraints only** — it must not name the fix.
 5. Deliberately **slightly above real-exam difficulty**: subtler distractors and one more competing constraint than the candidate expects.
 
+## Multiple-Response Items
+
+The v1.0 exam guide states the item format verbatim: *"Multiple-choice and multiple-response
+items; **each item states how many responses to select**."* Author these as follows.
+
+- **State the count in the stem.** End it with "Select 2." — the real exam tells the candidate how
+  many to pick, so a stem that hides the count is not exam-realistic.
+- **`responseCount` must equal `correctKeys.length`**, every key must be a real option key, and no
+  duplicates. `scripts/validate-content.ts` check #10 enforces all three and fails the build.
+- **`correctKey` must still be one of `correctKeys`** — pick the single strongest one. The column is
+  non-nullable and any legacy single-answer path must degrade to a defensible option, not a wrong one.
+- **Use `responseCount: 2`.** With only four options a select-3 item leaves exactly one wrong answer,
+  which is close to free marks. Two correct plus two defensible distractors is the only shape that
+  discriminates at this option count.
+- **Populate `distractorReasons` for all four options** — for each correct key say why it is
+  *required*; for each wrong key name the constraint it violates or the root cause it misses. Never
+  reference option letters: options are shuffled per fetch.
+- **No giveaway sets.** The discrimination must be *which pair works together*, not which single
+  option is least absurd. If a candidate can identify both correct answers without reading the
+  constraints, the item is measuring reading speed rather than judgment.
+- Grading is **exact-set match, no partial credit** (`gradeAnswerSet`), so a near-miss scores the
+  same as a blank. Write the two correct options so they are jointly necessary, not merely both true.
+
 ## Distractor Design — The Seven Common Wrong Patterns
 
 When generating questions live, build distractors using these patterns. The exam uses them constantly.
@@ -221,6 +244,17 @@ A good question will use at least two of these as distractors.
 > D) Consolidate both into a single `lookup_entity` tool that accepts any identifier and picks the backend internally
 >
 > **Correct: B.** Descriptions are the primary tool-selection mechanism; enriching them is the low-effort, high-leverage fix that addresses the root cause. A adds token overhead while leaving the root cause — undifferentiated descriptions — in place. C is over-engineered — it bypasses the model's language understanding and adds a brittle keyword layer before simpler fixes were tried. D is a real architectural option, but far more effort than a first step warrants when the immediate defect is description quality. C and D are the over-engineering distractors here.
+
+### Agent SDK Hooks & Data Normalization
+
+> *Scenario:* A logistics agent orchestrates three MCP tools you can't modify: one returns Unix epoch milliseconds and a numeric status code, one returns ISO 8601 timestamps and a string status, and one returns Unix epoch in seconds with its own, misaligned status codes. Processing 40,000 orders/day, the agent starts asserting impossible sequences ("shipped before ordered") because it's comparing timestamps across mismatched units. What fixes this before the release freeze?
+>
+> A) Document each tool's format in the system prompt and ask the model to convert before comparing
+> B) Add a `PostToolUse` hook that normalizes every tool's timestamp and status code to one canonical format before the result reaches the model
+> C) Increase context so the model can see more of each raw payload while reasoning through the conversion
+> D) Stand up a separate normalization microservice all three tools route through
+>
+> **Correct: B.** `PostToolUse` hooks transform tool results *before the model processes them* — the model never needs to learn three formats. A leaves error-prone conversion to per-turn model judgment (probabilistic, not deterministic). C gives the model more inconsistent data to reason over, not less. D is over-engineered relative to a hook that ships in the same release. Companion distractor direction: a hook is not only a gate — it blocks-and-redirects (refund > $500 → human escalation with a structured handoff, not a dead-end deny) — and not every judgment gap should become a hook: when the requirement isn't deterministic compliance (e.g. routing ambiguity from near-identical tool descriptions), the proportionate fix is better descriptions and few-shot examples, not a `PreToolUse` keyword gate.
 
 ### Proportionality: Criteria First
 

@@ -3,14 +3,18 @@ export const runtime = "nodejs";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { syncLedger } from "@/lib/ledger-sync";
-
-const STUDENT_ID = "default";
+import { requireUserIdApi } from "@/lib/current-user";
 
 export async function POST() {
+  const userId = await requireUserIdApi();
+  if (!userId) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
   try {
     // Find the open session
     const openSession = await prisma.session.findFirst({
-      where: { studentId: STUDENT_ID, endedAt: null },
+      where: { studentId: userId, endedAt: null },
       orderBy: { startedAt: "desc" },
     });
 
@@ -23,7 +27,7 @@ export async function POST() {
 
     // Sync ledger
     try {
-      await syncLedger(STUDENT_ID);
+      await syncLedger(userId);
     } catch {
       // non-fatal
     }

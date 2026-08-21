@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { assertValidSlug } from "@/lib/concept-slugs";
 import { nudgeMastery } from "./mastery";
 import { grade } from "./grade";
+import { gradeAnswerSet } from "@/lib/exam/score";
 import { getOrCreateOpenSession, closeSession } from "./session";
 import { buildLedgerSnapshot } from "./ledger-snapshot";
 import {
@@ -282,6 +283,13 @@ export async function executeTool(
         const baseWhere = {
           concept: { slug: conceptSlug },
           ...(effDifficulty ? { difficulty: effDifficulty } : {}),
+          // Serve only single-answer questions here. record_attempt accepts one
+          // chosenKey, so a multiple-response item (responseCount > 1) could be
+          // answered correctly and still grade as wrong — penalising mastery for
+          // a right answer. Multiple-response items are exercised in the timed
+          // mocks, which pass a full key set to gradeAnswerSet. Remove this
+          // filter only once record_attempt takes chosenKeys.
+          responseCount: 1,
         };
 
         // Prefer an unseen question. If none and noRepeat is set, DO NOT
@@ -394,12 +402,16 @@ export async function executeTool(
         // wins — model behavior is fetch → present → answer in tight order, so
         // staleness is not a real concern.
         let permutation = null;
+        let permutationJson = "{}";
         if (ctx.sessionId) {
           const fetch = await prisma.questionFetch.findFirst({
             where: { sessionId: ctx.sessionId, questionId },
             orderBy: { createdAt: "desc" },
           });
-          if (fetch) permutation = parsePermutation(fetch.permutation);
+          if (fetch) {
+            permutation = parsePermutation(fetch.permutation);
+            permutationJson = fetch.permutation;
+          }
         }
 
         const canonicalChosen = permutation
@@ -407,6 +419,21 @@ export async function executeTool(
           : chosenKey;
 
         const gradeResult = grade(question, canonicalChosen);
+        // The tutor's record_attempt tool only ever supplies one chosen
+        // letter (no multi-select checkpoint UI yet). Re-grade the
+        // correctness bit through the same exact-set helper the exam uses
+        // (src/lib/exam/score.ts) so a responseCount > 1 question can never
+        // be mis-graded here: wrapping the lone chosenKey in a 1-element
+        // array can never set-match a correctKeys array of 2+, so it
+        // correctly grades incorrect rather than silently comparing one
+        // letter against what is really a partial answer. For a
+        // single-answer question (responseCount 1, correctKeys null) this
+        // is equivalent to the grade() call above.
+        gradeResult.correct = gradeAnswerSet(
+          question,
+          chosenKey ? [chosenKey] : null,
+          permutationJson
+        );
 
         await prisma.questionAttempt.create({
           data: {
@@ -456,7 +483,63 @@ export async function executeTool(
           where: { id: ctx.studentId },
           select: { currentHour: true },
         });
-        const newHour = Math.min((student?.currentHour ?? 0) + 1, 23);
+        const hour = student?.currentHour ?? 0;
+
+        // The hour advances on recorded evidence, never on the model's own
+        // judgement that the material was covered. Instructing the tutor to
+        // run a checkpoint is probabilistic compliance — the same failure this
+        // curriculum teaches in Hour 17 — and in practice it skipped the
+        // checkpoint in 13 of 23 hours, which is how a student reaches Hour 23
+        // with 34 graded answers and a 90% mastery reading. A wrong answer
+        // still counts: the point is measurement, not success.
+        const MINI_MOCK_HOURS = [7, 14];
+        const FULL_MOCK_HOURS = [22, 23];
+
+        if (FULL_MOCK_HOURS.includes(hour)) {
+          // For the mock hours the 60-question timed exam IS the checkpoint.
+          // Cumulative so the requirement stays monotonic without tracking
+          // when each hour began: Hour 22 needs the first mock, 23 the second.
+          const need = hour === 22 ? 1 : 2;
+          const have = await prisma.examAttempt.count({
+            where: {
+              studentId: ctx.studentId,
+              status: { in: ["submitted", "expired"] },
+            },
+          });
+          if (have < need) {
+            return {
+              content: JSON.stringify({
+                advanced: false,
+                reason: "mock_required",
+                hour,
+                have,
+                need,
+                message: `Hour ${hour} requires ${need} completed full mock exam(s); ${have} recorded. Have the student run the 60-question timed mock, then call advance_hour again.`,
+              }),
+              isError: false,
+            };
+          }
+        } else {
+          const need = MINI_MOCK_HOURS.includes(hour) ? 10 : 3;
+          const have = await prisma.questionAttempt.count({
+            where: { studentId: ctx.studentId, hour },
+          });
+          if (have < need) {
+            return {
+              content: JSON.stringify({
+                advanced: false,
+                reason: "checkpoints_required",
+                hour,
+                have,
+                need,
+                message: `Hour ${hour} has ${have} of ${need} recorded checkpoints. Run the remaining ${need - have} with fetch_question + record_attempt before advancing — a wrong answer still counts as evidence.`,
+              }),
+              isError: false,
+            };
+          }
+        }
+
+        const newHour = Math.min(hour + 1, 23);
         await prisma.student.update({
           where: { id: ctx.studentId },
           data: { currentHour: newHour },

@@ -3,13 +3,17 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { getMasterySnapshot } from "@/lib/tutor/mastery";
 import { getOrCreateOpenSession } from "@/lib/tutor/session";
+import { requireUserId } from "@/lib/current-user";
+import { getBalanceMicros } from "@/lib/billing/wallet";
 import ChatClient from "./ChatClient";
-
-const STUDENT_ID = "default";
+import SignOutButton from "@/app/SignOutButton";
 
 export default async function ChatPage() {
+  const userId = await requireUserId();
+  const balanceMicros = await getBalanceMicros(userId);
+
   const student = await prisma.student.findUnique({
-    where: { id: STUDENT_ID },
+    where: { id: userId },
   });
 
   if (!student) {
@@ -22,7 +26,7 @@ export default async function ChatPage() {
     );
   }
 
-  const session = await getOrCreateOpenSession(STUDENT_ID);
+  const session = await getOrCreateOpenSession(userId);
 
   // Load existing messages from this session
   const dbMessages = await prisma.sessionMessage.findMany({
@@ -39,13 +43,17 @@ export default async function ChatPage() {
       : undefined,
   }));
 
-  const masterySnapshot = await getMasterySnapshot(STUDENT_ID);
+  const masterySnapshot = await getMasterySnapshot(userId);
 
   return (
     <ChatClient
       initialMessages={initialMessages}
       initialMastery={masterySnapshot}
       studentName={student.name || "Student"}
+      initialBalanceMicros={balanceMicros}
+      signOutSlot={
+        <SignOutButton className="text-xs px-3 py-1.5 rounded border border-stone-300 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors" />
+      }
     />
   );
 }

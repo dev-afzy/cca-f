@@ -2,19 +2,56 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import ThemeToggle from "./ThemeToggle";
+import NewSessionButton from "./NewSessionButton";
+import SignOutButton from "./SignOutButton";
 import { prisma } from "@/lib/prisma";
 import { getMasterySnapshot } from "@/lib/tutor/mastery";
 import { readinessFrom } from "@/lib/exam/score";
 import { HOUR_TOPICS } from "@/lib/hour-topics";
-
-const STUDENT_ID = "default";
+import { auth } from "@/lib/auth";
 
 export default async function Home() {
-  const student = await prisma.student.findUnique({ where: { id: STUDENT_ID } });
-  const snapshot = student ? await getMasterySnapshot(STUDENT_ID) : null;
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return (
+      <main className="min-h-screen bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100">
+        <div className="max-w-5xl mx-auto px-6 py-10">
+          <div className="flex items-center justify-between mb-10">
+            <p className="text-[10px] tracking-[0.3em] uppercase text-stone-400 dark:text-stone-500 font-medium">
+              Claude Certified Architect — Foundations
+            </p>
+            <ThemeToggle />
+          </div>
+          <div className="flex flex-col items-center justify-center py-24 gap-6 text-center">
+            <p className="text-[10px] tracking-[0.3em] uppercase text-amber-600 dark:text-amber-500 font-semibold">
+              Study scaffold
+            </p>
+            <h1 className="text-[2.75rem] leading-none font-bold tracking-tight text-stone-900 dark:text-stone-50">
+              CCA-F Tutor
+            </h1>
+            <p className="text-stone-500 dark:text-stone-400 text-sm leading-relaxed max-w-xs">
+              Architect-level fluency in 23 hours — adaptive questions, spaced recall, timed mocks.
+            </p>
+            <Link
+              href="/login"
+              className="mt-4 inline-flex items-center justify-center rounded-xl bg-amber-500 hover:bg-amber-400 dark:bg-amber-500 dark:hover:bg-amber-400 text-white px-8 py-4 font-semibold shadow-md hover:shadow-lg transition-all duration-150"
+            >
+              Sign in
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  const userId = session.user.id;
+
+  const student = await prisma.student.findUnique({ where: { id: userId } });
+  const snapshot = student ? await getMasterySnapshot(userId) : null;
 
   const attempts = await prisma.examAttempt.findMany({
-    where: { studentId: STUDENT_ID, status: { in: ["submitted", "expired"] } },
+    where: { studentId: userId, status: { in: ["submitted", "expired"] } },
     orderBy: { submittedAt: "desc" },
     take: 5,
   });
@@ -52,7 +89,13 @@ export default async function Home() {
           <p className="text-[10px] tracking-[0.3em] uppercase text-stone-400 dark:text-stone-500 font-medium">
             Claude Certified Architect — Foundations
           </p>
-          <ThemeToggle />
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-stone-500 dark:text-stone-400">
+              {session.user.name ?? "Student"}
+            </span>
+            <SignOutButton />
+            <ThemeToggle />
+          </div>
         </div>
 
         {/* Bento grid */}
@@ -66,7 +109,6 @@ export default async function Home() {
               </p>
               <h1
                 className="text-[2.75rem] leading-none font-bold tracking-tight text-stone-900 dark:text-stone-50"
-                style={{ fontFamily: "Georgia, serif" }}
               >
                 CCA-F Tutor
               </h1>
@@ -114,7 +156,6 @@ export default async function Home() {
                   </svg>
                   <div
                     className="absolute inset-0 flex items-center justify-center text-[1.1rem] font-bold text-stone-800 dark:text-stone-100"
-                    style={{ fontFamily: "Georgia, serif" }}
                   >
                     {readiness.overallPct}%
                   </div>
@@ -133,23 +174,32 @@ export default async function Home() {
             )}
           </section>
 
-          {/* ── Continue tutoring ──────────────────────────────────── */}
-          <Link
-            href="/chat"
-            className="group rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 shadow-sm hover:shadow-md hover:border-stone-300 dark:hover:border-stone-700 p-5 flex flex-col gap-1 transition-all duration-150"
-          >
-            <span className="font-semibold text-sm text-stone-800 dark:text-stone-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
-              Continue tutoring
+          {/* ── Continue tutoring / Sprint complete ────────────────── */}
+          <section className="rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 shadow-sm p-5 flex flex-col gap-1">
+            <span className="font-semibold text-sm text-stone-800 dark:text-stone-100">
+              {currentHour >= 23 ? "Sprint complete 🎉" : "Continue tutoring"}
             </span>
             <span className="text-xs text-stone-500 dark:text-stone-400 leading-snug">
               {currentHour >= 23
-                ? "Sprint complete"
+                ? "All 23 hours done — start a fresh review session or take a mock exam."
                 : `Resume Hour ${nextHour} — ${nextTopic}`}
             </span>
-            <span className="mt-auto text-[10px] px-2 py-0.5 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 w-fit font-medium">
-              Hour {currentHour} / 23
-            </span>
-          </Link>
+            <div className="mt-auto flex items-center gap-2 pt-2">
+              <Link
+                href="/chat"
+                className="text-[11px] px-2.5 py-1 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 font-medium transition-colors"
+              >
+                {currentHour >= 23 ? "Open chat" : "Resume"}
+              </Link>
+              <NewSessionButton
+                label="New session"
+                className="text-[11px] px-2.5 py-1 rounded-full border border-stone-300 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 font-medium transition-colors disabled:opacity-50"
+              />
+              <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 font-medium">
+                Hour {currentHour} / 23
+              </span>
+            </div>
+          </section>
 
           {/* ── Exam trend sparkline ───────────────────────────────── */}
           <section className="rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 shadow-sm p-5">
@@ -160,7 +210,6 @@ export default async function Home() {
               <>
                 <p
                   className="text-base font-medium text-stone-700 dark:text-stone-300 tabular-nums mb-3"
-                  style={{ fontFamily: "Georgia, serif" }}
                 >
                   {trend.join(" → ")}
                 </p>

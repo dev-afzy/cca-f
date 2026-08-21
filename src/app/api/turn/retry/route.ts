@@ -1,4 +1,7 @@
 export const runtime = "nodejs";
+// The agentic tutor loop can run up to 25 model round-trips; raise the
+// serverless function ceiling so a long retry isn't killed mid-stream.
+export const maxDuration = 60;
 
 import { prisma } from "@/lib/prisma";
 import { classifyIntent } from "@/lib/router";
@@ -8,8 +11,10 @@ import { buildLedgerSnapshot } from "@/lib/tutor/ledger-snapshot";
 import { getMasterySnapshot } from "@/lib/tutor/mastery";
 import { syncLedger } from "@/lib/ledger-sync";
 import type { MessageParam } from "@anthropic-ai/sdk/resources/messages";
-
-const STUDENT_ID = "default";
+import { requireUserIdApi } from "@/lib/current-user";
+import { ensureWallet, chargeTurn, KILL_SWITCH_ON } from "@/lib/billing/wallet";
+import { overDailyUserCap, overGlobalCap } from "@/lib/billing/guards";
+import { notifyBillingFailure } from "@/lib/alert";
 
 function jsonErrorResponse(message: string, status: number) {
   return new Response(JSON.stringify({ error: message }), {
@@ -19,14 +24,27 @@ function jsonErrorResponse(message: string, status: number) {
 }
 
 export async function POST() {
+  const userId = await requireUserIdApi();
+  if (!userId) {
+    return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers: { "Content-Type": "application/json" } });
+  }
+
   const student = await prisma.student.findUnique({
-    where: { id: STUDENT_ID },
+    where: { id: userId },
   });
   if (!student) {
     return jsonErrorResponse("Student not found", 404);
   }
 
-  const session = await getOrCreateOpenSession(STUDENT_ID);
+  if (await KILL_SWITCH_ON()) return jsonErrorResponse("Service temporarily paused. Try again soon.", 503);
+  const wallet = await ensureWallet(userId);
+  if (wallet.balanceMicros <= 0) {
+    return new Response(JSON.stringify({ error: "insufficient_credits", code: "INSUFFICIENT_CREDITS", balanceMicros: wallet.balanceMicros }), { status: 402, headers: { "Content-Type": "application/json" } });
+  }
+  if (await overGlobalCap()) return jsonErrorResponse("Service temporarily paused. Try again soon.", 503);
+  if (await overDailyUserCap(userId)) return new Response(JSON.stringify({ error: "daily_cap", code: "DAILY_CAP" }), { status: 429, headers: { "Content-Type": "application/json" } });
+
+  const session = await getOrCreateOpenSession(userId);
 
   // Drop trailing assistant + tool log messages from the failed attempt so the
   // history ends on the user turn we're retrying.
@@ -79,15 +97,15 @@ export async function POST() {
           .at(-1);
         const assistantTail = lastAssistant?.content ?? "";
 
-        const intent = await classifyIntent({
+        const { intent, usage: routerUsage, model: routerModel } = await classifyIntent({
           assistantTail,
           message: lastUserMessage,
         });
-        const ledgerSnapshot = await buildLedgerSnapshot(STUDENT_ID);
+        const ledgerSnapshot = await buildLedgerSnapshot(userId);
 
         const loopResult = await runTutorLoop(
           {
-            student: { id: STUDENT_ID, currentHour: student.currentHour },
+            student: { id: userId, currentHour: student.currentHour },
             session: { id: session.id },
             hour: student.currentHour,
             history: history.slice(0, -1),
@@ -117,14 +135,28 @@ export async function POST() {
         }
 
         try {
-          await syncLedger(STUDENT_ID);
+          await syncLedger(userId);
         } catch {
           // non-fatal
         }
 
-        const masterySnapshot = await getMasterySnapshot(STUDENT_ID);
+        let balanceMicros: number | undefined;
+        let costMicros: number | undefined;
+        try {
+          const perModel = [
+            { model: routerModel, ...routerUsage },
+            { model: loopResult.model, ...loopResult.usage },
+          ];
+          const charge = await chargeTurn({ userId, sessionId: session.id, route: "turn_retry", perModel, stoppedAt: loopResult.stoppedAt });
+          balanceMicros = charge.balanceMicros;
+          costMicros = charge.billedMicros;
+        } catch (e) {
+          await notifyBillingFailure(`chargeTurn failed (route=turn_retry, user=${userId})`, e);
+        }
+
+        const masterySnapshot = await getMasterySnapshot(userId);
         const freshStudent = await prisma.student.findUnique({
-          where: { id: STUDENT_ID },
+          where: { id: userId },
           select: { currentHour: true },
         });
 
@@ -136,6 +168,8 @@ export async function POST() {
           toolsCalled: loopResult.toolCalls.map((t) => t.name),
           currentHour: freshStudent?.currentHour ?? student.currentHour,
           stoppedAt: loopResult.stoppedAt,
+          balanceMicros,
+          costMicros,
         });
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);

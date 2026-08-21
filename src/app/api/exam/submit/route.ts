@@ -2,11 +2,32 @@ export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { gradeAnswer, summarize, type GradedAnswer } from "@/lib/exam/score";
+import { gradeAnswerSet, summarize, type GradedAnswer } from "@/lib/exam/score";
+import { requireUserIdApi } from "@/lib/current-user";
 
-const STUDENT_ID = "default";
+// The student's chosen letters (shuffled-position) for one answer row.
+// Prefers the chosenKeys JSON array (multi-response); falls back to the
+// single chosenKey for single-answer rows or legacy data.
+function parseChosenKeys(a: { chosenKey: string | null; chosenKeys: string | null }): string[] | null {
+  if (a.chosenKeys) {
+    try {
+      const parsed = JSON.parse(a.chosenKeys) as unknown;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map((k) => String(k));
+      }
+    } catch {
+      // malformed JSON — fall back to chosenKey below
+    }
+  }
+  return a.chosenKey ? [a.chosenKey] : null;
+}
 
 export async function POST(req: Request) {
+  const userId = await requireUserIdApi();
+  if (!userId) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
   try {
     const { attemptId } = (await req.json()) as { attemptId?: number };
     if (typeof attemptId !== "number") {
@@ -14,7 +35,7 @@ export async function POST(req: Request) {
     }
 
     const attempt = await prisma.examAttempt.findFirst({
-      where: { id: attemptId, studentId: STUDENT_ID },
+      where: { id: attemptId, studentId: userId },
       include: { answers: { include: { question: true } } },
     });
     if (!attempt) return NextResponse.json({ error: "attempt not found" }, { status: 404 });
@@ -24,9 +45,10 @@ export async function POST(req: Request) {
 
     const graded: GradedAnswer[] = [];
     for (const a of attempt.answers) {
-      const correct = gradeAnswer(
-        { correctKey: a.question.correctKey, distractorReasons: a.question.distractorReasons },
-        a.chosenKey,
+      const chosenKeys = parseChosenKeys(a);
+      const correct = gradeAnswerSet(
+        { correctKey: a.question.correctKey, correctKeys: a.question.correctKeys },
+        chosenKeys,
         a.permutation
       );
       graded.push({ domain: a.question.domain, correct });

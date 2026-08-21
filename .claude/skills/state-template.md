@@ -53,6 +53,8 @@ Track each concept area as a percentage. Update after every session that touched
 - Tool Calling Patterns: <%>
 
 ### Week 2 — MCP, tools & agentic patterns
+- Built-in Tool Selection (Read/Write/Edit/Bash/Grep/Glob): <%>
+- Task Decomposition Strategies: <%>
 - MCP Integration & Configuration: <%>
 - MCP Primitives (Tools / Resources / Prompts): <%>
 - Tool Interface Design & Structured Errors: <%>
@@ -63,9 +65,12 @@ Track each concept area as a percentage. Update after every session that touched
 - Agentic Loop & Termination (stop_reason): <%>
 
 ### Week 3 — Claude Code & production workflows
+- Context in Large-Codebase Exploration: <%>
+- Human Review Workflows & Confidence Calibration: <%>
 - CLAUDE.md Hierarchy & Path-Scoped Rules: <%>
 - Slash Commands, Skills & Plan Mode: <%>
 - Guardrails (Hooks, Tool Gating, Escalation): <%>
+- Agent SDK Hooks & Data Normalization: <%>
 - Claude Code in CI/CD & Iterative Refinement: <%>
 - Prompt Engineering: Explicit Criteria & Few-Shot: <%>
 

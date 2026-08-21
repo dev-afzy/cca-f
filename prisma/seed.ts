@@ -24,32 +24,7 @@ const adapter = new PrismaLibSql({ url: `file:${dbPath}` });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  // Fresh DBs start the sprint clock today. To reset the clock on an
-  // existing student without wiping data, run `npm run db:reset-sprint`.
-  const now = new Date();
-  const startOfTodayUtc = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
-  );
-  const targetExamDate = new Date(startOfTodayUtc.getTime() + 23 * 86400000);
-
-  console.log("Seeding student...");
-  await prisma.student.upsert({
-    where: { id: "default" },
-    create: {
-      id: "default",
-      name: "",
-      preferredAddress: "",
-      background: "",
-      prerequisites: "Agent Skills | Claude API | MCP | Claude Code",
-      timezone: "",
-      preferredStyle: "[]",
-      currentHour: 0,
-      sprintStartDate: startOfTodayUtc,
-      targetExamDate,
-      ledgerPath: "~/.cca-f-tutor/student-ledger.md",
-    },
-    update: {},
-  });
+  // Student profiles are created per-user at first login (see ensure-student.ts).
 
   console.log("Retiring out-of-scope concepts/questions...");
   await prisma.question.deleteMany({
@@ -73,28 +48,14 @@ async function main() {
     });
   }
 
-  console.log("Seeding concept masteries...");
-  const allConcepts = await prisma.concept.findMany();
-  for (const concept of allConcepts) {
-    await prisma.conceptMastery.upsert({
-      where: {
-        studentId_conceptId: { studentId: "default", conceptId: concept.id },
-      },
-      create: {
-        studentId: "default",
-        conceptId: concept.id,
-        mastery: 0,
-        lastTouched: null,
-      },
-      update: {},
-    });
-  }
-
   console.log("Seeding questions...");
   for (const q of QUESTION_SEED) {
     const concept = await prisma.concept.findUnique({
       where: { slug: q.conceptSlug },
     });
+
+    const responseCount = q.responseCount ?? 1;
+    const correctKeys = q.correctKeys ? JSON.stringify(q.correctKeys) : null;
 
     await prisma.question.upsert({
       where: { slug: q.slug },
@@ -105,6 +66,8 @@ async function main() {
         stem: q.stem,
         options: JSON.stringify(q.options),
         correctKey: q.correctKey,
+        responseCount,
+        correctKeys,
         distractorReasons: JSON.stringify(q.distractorReasons),
         source: "hand-authored",
         difficulty: q.difficulty ?? "warmup",
@@ -115,6 +78,8 @@ async function main() {
         stem: q.stem,
         options: JSON.stringify(q.options),
         correctKey: q.correctKey,
+        responseCount,
+        correctKeys,
         distractorReasons: JSON.stringify(q.distractorReasons),
         difficulty: q.difficulty ?? "warmup",
       },
