@@ -37,6 +37,29 @@ The real exam is harder than this app's warm-up tier. A generated hard question 
 4. A stem that describes **symptoms and constraints only** — it must not name the fix.
 5. Deliberately **slightly above real-exam difficulty**: subtler distractors and one more competing constraint than the candidate expects.
 
+## Multiple-Response Items
+
+The v1.0 exam guide states the item format verbatim: *"Multiple-choice and multiple-response
+items; **each item states how many responses to select**."* Author these as follows.
+
+- **State the count in the stem.** End it with "Select 2." — the real exam tells the candidate how
+  many to pick, so a stem that hides the count is not exam-realistic.
+- **`responseCount` must equal `correctKeys.length`**, every key must be a real option key, and no
+  duplicates. `scripts/validate-content.ts` check #10 enforces all three and fails the build.
+- **`correctKey` must still be one of `correctKeys`** — pick the single strongest one. The column is
+  non-nullable and any legacy single-answer path must degrade to a defensible option, not a wrong one.
+- **Use `responseCount: 2`.** With only four options a select-3 item leaves exactly one wrong answer,
+  which is close to free marks. Two correct plus two defensible distractors is the only shape that
+  discriminates at this option count.
+- **Populate `distractorReasons` for all four options** — for each correct key say why it is
+  *required*; for each wrong key name the constraint it violates or the root cause it misses. Never
+  reference option letters: options are shuffled per fetch.
+- **No giveaway sets.** The discrimination must be *which pair works together*, not which single
+  option is least absurd. If a candidate can identify both correct answers without reading the
+  constraints, the item is measuring reading speed rather than judgment.
+- Grading is **exact-set match, no partial credit** (`gradeAnswerSet`), so a near-miss scores the
+  same as a blank. Write the two correct options so they are jointly necessary, not merely both true.
+
 ## Distractor Design — The Seven Common Wrong Patterns
 
 When generating questions live, build distractors using these patterns. The exam uses them constantly.
