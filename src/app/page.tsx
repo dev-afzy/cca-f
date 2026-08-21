@@ -198,7 +198,7 @@ export default async function Home() {
               />
               {currentHour >= 23 && (
                 <StartNewSprintButton
-                  className="text-[11px] px-2.5 py-1 rounded-full bg-amber-500 hover:bg-amber-400 text-white font-medium transition-colors disabled:opacity-50"
+                  className="text-[11px] px-2.5 py-1 rounded-full border border-stone-300 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 font-medium transition-colors disabled:opacity-50"
                 />
               )}
               <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 font-medium">
