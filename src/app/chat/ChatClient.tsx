@@ -402,9 +402,15 @@ function ChatClientInner({
           {messages.length === 0 && (
             <div className="flex items-center justify-center h-full">
               <div className="text-center text-stone-400 dark:text-stone-500">
-                <p className="text-sm">Say hi to start your session.</p>
+                <p className="text-sm">
+                  Say hi to start Hour {currentHour} of 23.
+                </p>
                 <p className="text-xs mt-1">
-                  Hour 0 begins with the diagnostic battery.
+                  {currentHour === 0
+                    ? "Hour 0 begins with the diagnostic battery."
+                    : currentHour >= 23
+                      ? "You're on the final hour — the second full mock. Your progress is kept; a new session only clears the chat."
+                      : "Your progress is kept; a new session only clears the chat."}
                 </p>
               </div>
             </div>
