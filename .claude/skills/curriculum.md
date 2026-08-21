@@ -145,6 +145,8 @@ The instructor (you) generates the actual teaching content live, using the Child
 **Objectives:** Configure MCP servers at the right scope. Use MCP resources to cut exploratory tool calls. Select built-in tools (Read/Write/Edit/Bash/Grep/Glob) correctly.
 
 **Topics:**
+- Choosing among the built-in tools: search file **contents** to find an implementation whose name you cannot guess; match **paths** to narrow a set by naming convention; `Read` only what a search has already confirmed matters.
+- `Edit` performs a scoped replacement; `Write` reconstructs a whole file and will silently revert a colleague's concurrent edits. Prefer the scoped operation for a targeted change.
 - The host / client / server model in one diagram — background only. (Transports, JSON-RPC framing, and lifecycle internals are Level-300 material and explicitly NOT on this exam.)
 - Project-scoped `.mcp.json` (version-controlled, shared with the team) vs user-scoped `~/.claude.json` (personal/experimental servers). Both available simultaneously; all configured servers' tools are discovered at connection time.
 - Environment-variable expansion in `.mcp.json` (e.g. `${GITHUB_TOKEN}`) — credentials never committed.
@@ -218,6 +220,9 @@ The instructor (you) generates the actual teaching content live, using the Child
 **Objectives:** Recognize when to break a task into parallel/sequential worker calls. Manage the context boundary.
 
 **Topics:**
+- **Task decomposition strategies:** decide the number and shape of stages *after* inspecting the task, and re-decompose when intermediate results show it is broader than it looked — a plan fixed in advance overspends on narrow tasks and under-covers broad ones.
+- Decompose along the **dependency**, not the file count: batch changes that interact so each unit leaves the build green, rather than one subtask per file.
+- **Multi-step workflow enforcement and handoff:** each step's completion should be verifiable, and a handoff across a boundary (agent→agent or agent→human) carries **named fields** — identifiers, root cause, amount, recommended action — never a prose summary the receiver must mine.
 - Coordinator decomposes a task → spawns workers (sub-prompts or subagents) → aggregates results.
 - Hub-and-spoke shape: coordinator has the full picture, workers have isolated context.
 - Why workers don't share each other's context (and why that's a feature).
@@ -288,6 +293,9 @@ The instructor (you) generates the actual teaching content live, using the Child
 **Objectives:** Scope commands and skills correctly. Use skill frontmatter deliberately. Choose plan mode vs direct execution by task complexity, and protect the main context during exploration.
 
 **Topics:**
+- **Context in large-codebase exploration:** the intermediate reading is far larger than the deliverable. Delegate the exploration to a subagent with its own context and return only the conclusion, rather than holding 50 files in the session that needs one page.
+- Compaction is lossy — it thins exactly the file-and-line detail an analysis depends on. When most of a session is a *rejected* approach, a fresh session seeded with a structured summary beats compacting.
+- Scratchpad files outlive any one session's context: accumulate findings there across days instead of re-deriving them.
 - Slash commands: project `.claude/commands/` (version-controlled, every developer gets them on clone/pull) vs personal `~/.claude/commands/`.
 - Skills in `.claude/skills/` with SKILL.md frontmatter: `context: fork` (run in an isolated sub-agent context so verbose output doesn't pollute the main conversation), `allowed-tools` (restrict tool access during the skill), `argument-hint` (prompt for required parameters).
 - Personal skill variants under different names in `~/.claude/skills/` so teammates aren't affected.
@@ -307,6 +315,8 @@ The instructor (you) generates the actual teaching content live, using the Child
 **Objectives:** Stack programmatic guardrails. Distinguish guidance (prompts) from enforcement (code).
 
 **Topics:**
+- **Human review workflows and confidence calibration:** a self-reported confidence score has no relationship to the actual error rate until it is **measured against a labelled set**. Until calibrated, routing by it is routing by noise.
+- Route at the unit where the error and the review both live: an aggregate over 14 fields hides a single badly-wrong field by construction, so calibrate and route **per field** when capacity is per field.
 - `PreToolUse` and `PostToolUse` hooks — programmatic interception.
 - `PostToolUse` as a **data-normalization layer**, not only a gate: transform tool results *before the model sees them*.
 - Heterogeneous formats across MCP tools — Unix epoch vs ISO 8601 timestamps, numeric status codes vs strings — normalized in one hook instead of teaching the model to handle every variant.

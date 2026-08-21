@@ -12,7 +12,8 @@
     "db:audit-sessions": "tsx scripts/audit-sessions.ts",
     "db:backfill-masteries": "tsx scripts/backfill-masteries.ts",
     "validate:content": "tsx scripts/validate-content.ts",
-    "test:grading": "tsx --conditions=react-server scripts/check-grading.ts"
+    "test:grading": "tsx --conditions=react-server scripts/check-grading.ts",
+    "grade:coverage": "tsx --conditions=react-server scripts/grade-coverage.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
