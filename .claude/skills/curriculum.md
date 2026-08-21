@@ -1,4 +1,4 @@
-# Curriculum — 23 Hours, 4 Weeks
+# Curriculum — 24 Hours, 4 Weeks
 
 Structure follows the official CCA-F exam guide: Week 1 patches API foundations and extraction quality, Week 2 goes deep on MCP, tool design, and agent patterns, Week 3 covers Claude Code configuration and production workflows (Domain 3, 20% of the exam), and Week 4 closes the Agentic Architecture deep-dive (multi-agent orchestration, session management) before running the mocks. Domain weights: Agentic 27%, Claude Code 20%, Prompts 20%, Tool & MCP 18%, Context 15%.
 
@@ -267,7 +267,7 @@ The instructor (you) generates the actual teaching content live, using the Child
 
 ---
 
-## Week 3 — Claude Code Configuration & Production Workflows (Hours 15–19)
+## Week 3 — Claude Code Configuration & Production Workflows (Hours 15–20)
 
 ### Hour 15 — CLAUDE.md Hierarchy & Path-Scoped Rules
 
@@ -312,11 +312,9 @@ The instructor (you) generates the actual teaching content live, using the Child
 
 ### Hour 17 — Guardrails: Multi-Layer Defense
 
-**Objectives:** Stack programmatic guardrails. Distinguish guidance (prompts) from enforcement (code).
+**Objectives:** Stack programmatic guardrails. Distinguish guidance (prompts) from enforcement (code). Use hooks for both blocking and data normalization.
 
 **Topics:**
-- **Human review workflows and confidence calibration:** a self-reported confidence score has no relationship to the actual error rate until it is **measured against a labelled set**. Until calibrated, routing by it is routing by noise.
-- Route at the unit where the error and the review both live: an aggregate over 14 fields hides a single badly-wrong field by construction, so calibrate and route **per field** when capacity is per field.
 - `PreToolUse` and `PostToolUse` hooks — programmatic interception.
 - `PostToolUse` as a **data-normalization layer**, not only a gate: transform tool results *before the model sees them*.
 - Heterogeneous formats across MCP tools — Unix epoch vs ISO 8601 timestamps, numeric status codes vs strings — normalized in one hook instead of teaching the model to handle every variant.
@@ -326,12 +324,7 @@ The instructor (you) generates the actual teaching content live, using the Child
 - Output filters / classifiers as a final layer.
 - Why programmatic enforcement beats prompt-based "never do X" rules.
 - The exam's favorite distractor: "add a sentence to the system prompt."
-- The distractor is "add a rule to *prevent* an action"; the correct use of the system prompt is "define the *decision criteria*" — preventing vs calibrating are different problems.
-- Escalation design (the other half of this hour): explicit escalation criteria with few-shot examples in the system prompt are the CORRECT, proportionate fix when the agent's decision boundaries are unclear — this is not "prompt-as-guardrail", it's criteria definition.
-- Honor an explicit customer request for a human immediately; acknowledge frustration but offer resolution when the issue is in capability — escalate if they reiterate.
-- Escalate on policy gaps (the policy is silent or ambiguous on this case), not just "hard" cases.
-- Multiple customer matches → ask for additional identifiers; never pick by heuristic.
-- The proportionality principle: hooks for rules that must NEVER break (deterministic compliance); prompt criteria for judgment calibration. Sentiment and self-reported confidence are unreliable proxies for both.
+- The distractor is "add a rule to *prevent* an action"; the correct use of the system prompt is "define the *decision criteria*" — preventing vs calibrating are different problems, and the next hour picks up the calibrating half.
 
 **Friction zones:** Reaching for system prompt wording when a hook is the right answer. Stacking only one layer. Not knowing where in the lifecycle the hook fires. Over-correcting into "every fix must be a hook" — the exam also punishes over-engineering when explicit criteria would do. Assuming a hook can only block, never transform. Normalizing in the prompt ("the dates may be in different formats") instead of in a `PostToolUse` hook.
 
@@ -339,7 +332,26 @@ The instructor (you) generates the actual teaching content live, using the Child
 
 ---
 
-### Hour 18 — Claude Code in CI/CD & Iterative Refinement
+### Hour 18 — Escalation Design & Confidence Calibration
+
+**Objectives:** Design escalation criteria that calibrate judgment rather than gate actions. Calibrate confidence scores against measured error rates before using them to route review.
+
+**Topics:**
+- Escalation design: explicit escalation criteria with few-shot examples in the system prompt are the CORRECT, proportionate fix when the agent's decision boundaries are unclear — this is not "prompt-as-guardrail", it's criteria definition.
+- Honor an explicit customer request for a human immediately; acknowledge frustration but offer resolution when the issue is in capability — escalate if they reiterate.
+- Escalate on policy gaps (the policy is silent or ambiguous on this case), not just "hard" cases.
+- Multiple customer matches → ask for additional identifiers; never pick by heuristic.
+- **Human review workflows and confidence calibration:** a self-reported confidence score has no relationship to the actual error rate until it is **measured against a labelled set**. Until calibrated, routing by it is routing by noise.
+- Route at the unit where the error and the review both live: an aggregate over 14 fields hides a single badly-wrong field by construction, so calibrate and route **per field** when capacity is per field.
+- The proportionality principle, completed: the previous hour's hooks give deterministic guarantees for rules that must never break; explicit criteria and calibrated confidence give judgment-calibration for everything else. Sentiment and self-reported confidence are unreliable proxies for both.
+
+**Friction zones:** Treating "escalate when unsure" as sufficient criteria — "unsure" is as undefined as "difficult". Picking a customer match by heuristic instead of asking. Trusting a confidence score that was never checked against labeled outcomes. Aggregating confidence across many fields and losing the one field that is badly wrong.
+
+**Analogy seed:** A triage nurse doesn't escalate every patient to the ER — explicit criteria (vitals thresholds, symptom combinations), refined against real outcomes, decide it. That refinement against outcomes is calibration; the criteria themselves are the escalation design.
+
+---
+
+### Hour 19 — Claude Code in CI/CD & Iterative Refinement
 
 **Objectives:** Run Claude Code headless in pipelines with structured output. Design reviews that don't re-litigate or duplicate. Apply iterative refinement techniques instead of prose-tweaking.
 
@@ -359,7 +371,7 @@ The instructor (you) generates the actual teaching content live, using the Child
 
 ---
 
-### Hour 19 — Prompt Engineering: Explicit Criteria & Few-Shot
+### Hour 20 — Prompt Engineering: Explicit Criteria & Few-Shot
 
 **Objectives:** Replace vague instructions with explicit categorical criteria. Deploy few-shot examples where they actually move the needle. Manage false positives as a trust budget.
 
@@ -378,9 +390,9 @@ The instructor (you) generates the actual teaching content live, using the Child
 
 ---
 
-## Week 4 — Agentic Architecture Deep-Dive & Exam Simulation (Hours 20–23)
+## Week 4 — Agentic Architecture Deep-Dive & Exam Simulation (Hours 21–24)
 
-### Hour 20 — Multi-Agent Orchestration (Hub & Spoke)
+### Hour 21 — Multi-Agent Orchestration (Hub & Spoke)
 
 **Objectives:** Design a hub-and-spoke multi-agent system. Spawn isolated subagents correctly and run them in parallel. Manage the context boundary between coordinator and subagents.
 
@@ -401,7 +413,7 @@ The instructor (you) generates the actual teaching content live, using the Child
 
 ---
 
-### Hour 21 — Session Management & Workflows
+### Hour 22 — Session Management & Workflows
 
 **Objectives:** Resume, fork, and name sessions deliberately. Detect and mitigate stale context. Choose prompt chaining vs. dynamic adaptive decomposition based on task predictability.
 
@@ -420,7 +432,7 @@ The instructor (you) generates the actual teaching content live, using the Child
 
 ---
 
-### Hour 22 — Full Mock Exam #1 + Remediation
+### Hour 23 — Full Mock Exam #1 + Remediation
 
 **Objectives:** Take a timed full-length mock. Identify the weakest domain. Targeted remediation.
 
@@ -433,7 +445,7 @@ The instructor (you) generates the actual teaching content live, using the Child
 
 ---
 
-### Hour 23 — Full Mock Exam #2 + Final Review + Exam Strategy
+### Hour 24 — Full Mock Exam #2 + Final Review + Exam Strategy
 
 **Objectives:** Validate exam readiness. Lock in test-day strategy.
 

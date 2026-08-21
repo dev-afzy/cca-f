@@ -55,7 +55,7 @@ export default function MasterySidebar({
       ? 1
       : snapshot.currentHour <= 14
         ? 2
-        : snapshot.currentHour <= 19
+        : snapshot.currentHour <= 20
           ? 3
           : 4;
 
@@ -109,7 +109,7 @@ export default function MasterySidebar({
             Progress
           </h2>
           <p className="text-sm text-stone-700 dark:text-stone-200 mt-0.5">
-            Hour {snapshot.currentHour} / 23 &middot; Week {weekLabel}
+            Hour {snapshot.currentHour} / 24 &middot; Week {weekLabel}
           </p>
           <p className="text-xs text-stone-400 dark:text-stone-500">
             {snapshot.daysRemaining} day{snapshot.daysRemaining === 1 ? "" : "s"} left

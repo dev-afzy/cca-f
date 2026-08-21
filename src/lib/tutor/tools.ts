@@ -151,7 +151,7 @@ export const TUTOR_TOOLS: Tool[] = [
           type: "string",
           enum: ["warmup", "hard"],
           description:
-            "Optional tier filter. Use 'warmup' for in-hour checkpoints; use 'hard' for mock exams (Hours 7, 14, 22, 23). In a mock hour the handler defaults difficulty to \"hard\" and noRepeat to true when omitted; pass \"warmup\" explicitly only for post-mock remediation.",
+            "Optional tier filter. Use 'warmup' for in-hour checkpoints; use 'hard' for mock exams (Hours 7, 14, 23, 24). In a mock hour the handler defaults difficulty to \"hard\" and noRepeat to true when omitted; pass \"warmup\" explicitly only for post-mock remediation.",
         },
         noRepeat: {
           type: "boolean",
@@ -189,7 +189,7 @@ export const TUTOR_TOOLS: Tool[] = [
   {
     name: "advance_hour",
     description:
-      "Advance the student to the next hour. Use after the diagnostic (Hour 0 to 1) or once a session is complete. PRECONDITION, enforced: the current hour must already have its recorded checkpoints — 3 graded answers for a normal hour, 10 for the mini-mock hours 7 and 14, and a completed 60-question mock for hours 22 and 23. If the requirement is unmet this returns advanced:false with how many remain; run them via fetch_question + record_attempt and call again. A wrong answer still counts.",
+      "Advance the student to the next hour. Use after the diagnostic (Hour 0 to 1) or once a session is complete. PRECONDITION, enforced: the current hour must already have its recorded checkpoints — 3 graded answers for a normal hour, 10 for the mini-mock hours 7 and 14, and a completed 60-question mock for hours 23 and 24. If the requirement is unmet this returns advanced:false with how many remain; run them via fetch_question + record_attempt and call again. A wrong answer still counts.",
     input_schema: {
       type: "object",
       properties: {},

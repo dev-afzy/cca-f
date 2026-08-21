@@ -32,7 +32,7 @@ export default async function Home() {
               CCA-F Tutor
             </h1>
             <p className="text-stone-500 dark:text-stone-400 text-sm leading-relaxed max-w-xs">
-              Architect-level fluency in 23 hours — adaptive questions, spaced recall, timed mocks.
+              Architect-level fluency in 24 hours — adaptive questions, spaced recall, timed mocks.
             </p>
             <Link
               href="/login"
@@ -63,7 +63,7 @@ export default async function Home() {
     .map((a) => readinessFrom(a.correctCount, a.totalQuestions, a.perDomain).overallPct);
 
   const currentHour = snapshot?.currentHour ?? 0;
-  const nextHour = Math.min(currentHour + 1, 23);
+  const nextHour = Math.min(currentHour + 1, 24);
   const nextTopic = HOUR_TOPICS[nextHour] ?? "—";
   const daysRemaining = snapshot?.daysRemaining ?? null;
 
@@ -114,7 +114,7 @@ export default async function Home() {
                 CCA-F Tutor
               </h1>
               <p className="mt-3 text-stone-500 dark:text-stone-400 text-sm leading-relaxed max-w-xs">
-                Architect-level fluency in 23 hours — adaptive questions, spaced recall, timed mocks.
+                Architect-level fluency in 24 hours — adaptive questions, spaced recall, timed mocks.
               </p>
             </div>
             <Link
@@ -178,11 +178,11 @@ export default async function Home() {
           {/* ── Continue tutoring / Sprint complete ────────────────── */}
           <section className="rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 shadow-sm p-5 flex flex-col gap-1">
             <span className="font-semibold text-sm text-stone-800 dark:text-stone-100">
-              {currentHour >= 23 ? "Sprint complete 🎉" : "Continue tutoring"}
+              {currentHour >= 24 ? "Sprint complete 🎉" : "Continue tutoring"}
             </span>
             <span className="text-xs text-stone-500 dark:text-stone-400 leading-snug">
-              {currentHour >= 23
-                ? "All 23 hours done — start a fresh review session or take a mock exam."
+              {currentHour >= 24
+                ? "All 24 hours done — start a fresh review session or take a mock exam."
                 : `Resume Hour ${nextHour} — ${nextTopic}`}
             </span>
             <div className="mt-auto flex items-center gap-2 pt-2">
@@ -190,19 +190,19 @@ export default async function Home() {
                 href="/chat"
                 className="text-[11px] px-2.5 py-1 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 font-medium transition-colors"
               >
-                {currentHour >= 23 ? "Open chat" : "Resume"}
+                {currentHour >= 24 ? "Open chat" : "Resume"}
               </Link>
               <NewSessionButton
                 label="New session"
                 className="text-[11px] px-2.5 py-1 rounded-full border border-stone-300 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 font-medium transition-colors disabled:opacity-50"
               />
-              {currentHour >= 23 && (
+              {currentHour >= 24 && (
                 <StartNewSprintButton
                   className="text-[11px] px-2.5 py-1 rounded-full border border-stone-300 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 font-medium transition-colors disabled:opacity-50"
                 />
               )}
               <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 font-medium">
-                Hour {currentHour} / 23
+                Hour {currentHour} / 24
               </span>
             </div>
           </section>

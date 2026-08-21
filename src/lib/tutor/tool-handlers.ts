@@ -246,7 +246,7 @@ export async function executeTool(
         // questions or duplicates into a mock. Explicit values still win, so the
         // model can deliberately fetch warmup / allow-repeat for post-mock
         // remediation.
-        const MOCK_HOURS = new Set([7, 14, 22, 23]);
+        const MOCK_HOURS = new Set([7, 14, 23, 24]);
         let inMockHour = false;
         if (ctx.sessionId) {
           const sess = await prisma.session.findUnique({
@@ -489,17 +489,17 @@ export async function executeTool(
         // judgement that the material was covered. Instructing the tutor to
         // run a checkpoint is probabilistic compliance — the same failure this
         // curriculum teaches in Hour 17 — and in practice it skipped the
-        // checkpoint in 13 of 23 hours, which is how a student reaches Hour 23
+        // checkpoint in 13 of 23 hours (curriculum was 23 hours at the time), which is how a student reaches the final hour
         // with 34 graded answers and a 90% mastery reading. A wrong answer
         // still counts: the point is measurement, not success.
         const MINI_MOCK_HOURS = [7, 14];
-        const FULL_MOCK_HOURS = [22, 23];
+        const FULL_MOCK_HOURS = [23, 24];
 
         if (FULL_MOCK_HOURS.includes(hour)) {
           // For the mock hours the 60-question timed exam IS the checkpoint.
           // Cumulative so the requirement stays monotonic without tracking
-          // when each hour began: Hour 22 needs the first mock, 23 the second.
-          const need = hour === 22 ? 1 : 2;
+          // when each hour began: Hour 23 needs the first mock, 24 the second.
+          const need = hour === 23 ? 1 : 2;
           const have = await prisma.examAttempt.count({
             where: {
               studentId: ctx.studentId,
@@ -539,7 +539,7 @@ export async function executeTool(
           }
         }
 
-        const newHour = Math.min(hour + 1, 23);
+        const newHour = Math.min(hour + 1, 24);
         await prisma.student.update({
           where: { id: ctx.studentId },
           data: { currentHour: newHour },

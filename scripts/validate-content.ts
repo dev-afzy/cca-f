@@ -41,8 +41,8 @@ for (const q of QUESTION_SEED) {
   if (!(q.domain in DOMAIN_LABELS)) errors.push(`question "${q.slug}" has unknown domain "${q.domain}"`);
 }
 
-// 4. HOUR_TOPICS matches curriculum "### Hour N — Title" headings for hours 1-23
-for (let h = 1; h <= 23; h++) {
+// 4. HOUR_TOPICS matches curriculum "### Hour N — Title" headings for hours 1-24
+for (let h = 1; h <= 24; h++) {
   const m = curriculum.match(new RegExp(`^### Hour ${h} — (.+)$`, "m"));
   if (!m) {
     errors.push(`curriculum.md missing heading "### Hour ${h} — ..."`);
@@ -144,4 +144,4 @@ if (errors.length) {
   for (const e of errors) console.error(`  - ${e}`);
   process.exit(1);
 }
-console.log(`Content validation passed: ${CONCEPT_SEED.length} concepts, ${QUESTION_SEED.length} questions, 23 hours.`);
+console.log(`Content validation passed: ${CONCEPT_SEED.length} concepts, ${QUESTION_SEED.length} questions, 24 hours.`);

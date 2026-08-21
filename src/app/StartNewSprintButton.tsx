@@ -4,8 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 /**
- * Starts an entirely new 23-hour sprint attempt: Hour 0, every concept's
- * mastery reset to 0%, calendar reset to today + 23 days. Session history and
+ * Starts an entirely new 24-hour sprint attempt: Hour 0, every concept's
+ * mastery reset to 0%, calendar reset to today + 24 days. Session history and
  * exam attempts are kept as the record of the prior attempt — only "New
  * session" (a separate control) clears the visible chat.
  *
@@ -25,7 +25,7 @@ export default function StartNewSprintButton({
   const start = async () => {
     if (busy) return;
     const confirmed = window.confirm(
-      "Start a new 23-hour sprint? This resets your progress to Hour 0 and every " +
+      "Start a new 24-hour sprint? This resets your progress to Hour 0 and every " +
         "concept's mastery back to 0%. Past sessions and mock-exam results are kept " +
         "for reference, but your current progress will not be."
     );

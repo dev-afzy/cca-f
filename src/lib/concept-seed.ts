@@ -37,6 +37,6 @@ export const CONCEPT_SEED: ConceptSeed[] = [
   { slug: "multi-agent-orchestration",  name: "Multi-Agent Orchestration (Hub & Spoke)",              week: 4, domain: "Agentic",     sortOrder: 410 },
   { slug: "session-management",         name: "Session Management & Workflows",                       week: 4, domain: "Agentic",     sortOrder: 420 },
   // Cross-cutting
-  { slug: "human-review-calibration",     name: "Human Review Workflows & Confidence Calibration",      week: 3, domain: "Context",    sortOrder: 255 },
+  { slug: "human-review-calibration",     name: "Human Review Workflows & Confidence Calibration",      week: 3, domain: "Context",    sortOrder: 237 },
   { slug: "multi-instance-review",      name: "Multi-instance Review pattern",                        week: 0, domain: "Prompts",     sortOrder: 320 },
 ];

@@ -371,7 +371,7 @@ function ChatClientInner({
           <div>
             <h1 className="text-sm font-semibold text-stone-800 dark:text-stone-100">CCA-F Tutor</h1>
             <p className="text-xs text-stone-400 dark:text-stone-500">
-              {studentName} &middot; Hour {currentHour} / 23
+              {studentName} &middot; Hour {currentHour} / 24
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -403,12 +403,12 @@ function ChatClientInner({
             <div className="flex items-center justify-center h-full">
               <div className="text-center text-stone-400 dark:text-stone-500">
                 <p className="text-sm">
-                  Say hi to start Hour {currentHour} of 23.
+                  Say hi to start Hour {currentHour} of 24.
                 </p>
                 <p className="text-xs mt-1">
                   {currentHour === 0
                     ? "Hour 0 begins with the diagnostic battery."
-                    : currentHour >= 23
+                    : currentHour >= 24
                       ? "You're on the final hour — the second full mock. Your progress is kept; a new session only clears the chat."
                       : "Your progress is kept; a new session only clears the chat."}
                 </p>

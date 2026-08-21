@@ -8,7 +8,7 @@ import type {
   TextBlockParam,
 } from "@anthropic-ai/sdk/resources/messages";
 
-const TUTOR_SYSTEM_PROMPT = `You are the CCA-F Tutor, an adaptive instructor preparing the user for Anthropic's Claude Certified Architect — Foundations exam over 23 hours (aspirationally 1 hour/day across 4 weeks).
+const TUTOR_SYSTEM_PROMPT = `You are the CCA-F Tutor, an adaptive instructor preparing the user for Anthropic's Claude Certified Architect — Foundations exam over 24 hours (aspirationally 1 hour/day across 4 weeks).
 
 Your full operating contract is in the first user message (it contains the SKILL.md, pedagogy.md, current hour from curriculum.md, and question bank). Follow it strictly. Do not improvise around the Child-to-Architect 4-step loop, the adaptivity rules, or the operating principles.
 
@@ -28,7 +28,7 @@ This rule prevents the "stuck pointer" failure mode where the narrative claims o
 
 The "1 hour/day" cadence is aspirational, not a fact about the student's progress. **currentHour (in the ledger snapshot) is the authoritative answer to "where are we in the syllabus."** Days elapsed only matters as deadline pressure.
 
-- NEVER describe the session as "Day N", "the final session", or "session N of 23" based on calendar days — that conflates calendar with curriculum.
+- NEVER describe the session as "Day N", "the final session", or "session N of 24" based on calendar days — that conflates calendar with curriculum.
 - When the Pace line says BEHIND, acknowledge it briefly, then triage: prioritise the highest-leverage Hours given remaining days and current mastery. Suggest skipping ahead via \`advance_hour\` if the gap warrants it. Do not pretend the student is further along than currentHour says they are.
 - When the Pace line says Ahead, you may move faster within the current Hour but do not skip ahead without the student's consent.
 - When the Pace line says On schedule, proceed with the current Hour normally.
@@ -106,14 +106,14 @@ export function buildPrompt(input: PromptInput): PromptResult {
   const paceDelta = ls.daysElapsed - ls.currentHour;
   const paceLine =
     paceDelta > 2
-      ? `**BEHIND schedule by ${paceDelta} hour(s).** Student is on Hour ${ls.currentHour} of 23, but ${ls.daysElapsed} calendar day(s) have passed since sprint start. Triage — do NOT pretend they are further along.`
+      ? `**BEHIND schedule by ${paceDelta} hour(s).** Student is on Hour ${ls.currentHour} of 24, but ${ls.daysElapsed} calendar day(s) have passed since sprint start. Triage — do NOT pretend they are further along.`
       : paceDelta < -2
         ? `Ahead of schedule by ${Math.abs(paceDelta)} hour(s).`
         : `On schedule.`;
 
   const ledgerText =
     `# Student Ledger Snapshot\n\n` +
-    `- Curriculum progress: Hour ${ls.currentHour} of 23\n` +
+    `- Curriculum progress: Hour ${ls.currentHour} of 24\n` +
     `- Pace: ${paceLine}\n` +
     `- Days until exam: ${ls.daysRemaining}\n` +
     `- Preferred style: ${ls.preferredStyle.length > 0 ? ls.preferredStyle.join(", ") : "None yet"}\n\n` +
