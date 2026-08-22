@@ -12,7 +12,7 @@ export default async function SettingsPage() {
     where: { id: userId },
     select: { preferredProvider: true },
   });
-  const glmAvailable = Boolean(process.env.GLM_API_KEY);
+  const glmAvailable = Boolean(process.env.GLM_API_KEY?.trim());
 
   return (
     <main className="min-h-screen bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100">

@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "invalid body" }, { status: 400 });
   }
 
-  if (provider === "glm" && !process.env.GLM_API_KEY) {
+  if (provider === "glm" && !process.env.GLM_API_KEY?.trim()) {
     return NextResponse.json({ error: "glm_not_configured" }, { status: 400 });
   }
 

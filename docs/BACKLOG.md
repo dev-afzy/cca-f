@@ -159,3 +159,17 @@ ladder **14 → 30 → 90 days** · **max 4 attempts per rolling 12 months** · 
   official six-scenario pool but have **no deep-dive or sample questions in either guide version** —
   a candidate can draw a scenario with zero published prep material. Consider covering them
   defensively.
+
+---
+
+## 6. GLM-5.3 live-API verification (Task 1, credential-blocked)
+
+The model id `"glm-5.3"` (`src/lib/anthropic.ts`) and its pricing — $1.40 / $4.40 per 1M tokens
+in/out (`src/lib/billing/pricing.ts`) — are sourced from public pricing announcements, not verified
+against Z.ai's live Anthropic-compatible endpoint (`https://api.z.ai/api/anthropic`). No
+`GLM_API_KEY` credential has been available in any environment this feature was built in, so the
+smoke test described as Task 1 in
+`docs/superpowers/plans/2026-08-22-glm-provider-support.md` has never run. When a real key is
+supplied, run that smoke test and correct `TUTOR_MODEL_BY_PROVIDER.glm` / `PRICES["glm-5.3"]` if
+Z.ai's actual API returns a different model id string, different pricing, or a different `usage`
+object shape than assumed.

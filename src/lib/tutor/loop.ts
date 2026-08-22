@@ -1,6 +1,6 @@
 import "server-only";
 import { getTutorClient, getTutorModel, type TutorProvider } from "@/lib/anthropic";
-import { TUTOR_TOOLS } from "./tools";
+import { tutorTools } from "./tools";
 import { buildPrompt } from "./prompt";
 import { executeTool, type ToolContext } from "./tool-handlers";
 import type { Intent, LedgerSnapshot, ToolCallLog } from "@/lib/types";
@@ -74,7 +74,7 @@ export async function runTutorLoop(
       model,
       system,
       messages,
-      tools: TUTOR_TOOLS,
+      tools: tutorTools(provider === "anthropic"),
       max_tokens: 2048,
     });
 
