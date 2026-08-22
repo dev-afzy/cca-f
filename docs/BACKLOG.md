@@ -173,3 +173,13 @@ smoke test described as Task 1 in
 supplied, run that smoke test and correct `TUTOR_MODEL_BY_PROVIDER.glm` / `PRICES["glm-5.3"]` if
 Z.ai's actual API returns a different model id string, different pricing, or a different `usage`
 object shape than assumed.
+
+**Also revisit once the above lands: GLM may not actually be the cheaper backend.** The plan
+assumed GLM's headline rate makes it obviously cheap, but that was computed before prompt caching
+was gated off for GLM (caching compatibility is itself unconfirmed — see above). The tutor loop
+resends the full ~15k-token cacheable bundle (`SKILL.md` + `pedagogy.md` + `question-bank.md` +
+system prompt) on every iteration, uncached, for GLM; Claude pays that cost once via `cacheWrite`
+then `cacheRead` at a fraction of the rate on every later iteration. Rough modeling of a 5-iteration
+turn puts GLM only marginally cheaper than cached Claude, and a longer tool-heavy turn can make GLM
+the *more* expensive option. Measure a real GLM turn's `UsageEvent` once a key is available before
+describing GLM as the economical choice anywhere user-facing.
