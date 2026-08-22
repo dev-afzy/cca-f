@@ -1,5 +1,5 @@
 import "server-only";
-import { getTutorClient, getTutorModel, type TutorProvider } from "@/lib/anthropic";
+import { getTutorClient, getTutorModel, GLM_REASONING_EFFORT, type TutorProvider } from "@/lib/anthropic";
 import { tutorTools } from "./tools";
 import { buildPrompt } from "./prompt";
 import { executeTool, type ToolContext } from "./tool-handlers";
@@ -76,6 +76,16 @@ export async function runTutorLoop(
       messages,
       tools: tutorTools(provider === "anthropic"),
       max_tokens: 2048,
+      // GLM-5.3 has no "disabled" reasoning mode — see GLM_REASONING_EFFORT.
+      // `budget_tokens` is Anthropic's own thinking-config field (required by
+      // the SDK's type, minimum 1024) and is unused by Z.ai, which reads
+      // `reasoning_effort` instead for effort level.
+      ...(provider === "glm"
+        ? {
+            thinking: { type: "enabled" as const, budget_tokens: 1024 },
+            reasoning_effort: GLM_REASONING_EFFORT,
+          }
+        : {}),
     });
 
     stream.on("text", (delta: string) => {

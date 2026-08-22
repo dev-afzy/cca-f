@@ -10,13 +10,21 @@ export const MODEL_ROUTER = "claude-haiku-4-5-20251001";
 
 const TUTOR_MODEL_BY_PROVIDER: Record<TutorProvider, string> = {
   anthropic: "claude-sonnet-4-6",
-  // "glm-5.3" is sourced from public pricing/model announcements, not
-  // verified against Z.ai's live Anthropic-compatible API — no GLM_API_KEY
-  // credential has been available in any environment this feature was built
-  // in. A real smoke test against api.z.ai (docs/superpowers/plans/2026-08-22-glm-provider-support.md,
-  // Task 1) is still pending; see docs/BACKLOG.md for the tracked follow-up.
+  // Model id and pricing are sourced from public announcements; live-confirmed
+  // so far only on the one behavior below (thinking cannot be disabled). See
+  // docs/BACKLOG.md for the remaining unverified-value follow-up.
   glm: "glm-5.3",
 };
+
+// GLM-5.3 always reasons and rejects a request with no `thinking` config as
+// if reasoning were disabled — confirmed live against api.z.ai (error 1210:
+// "This model always engages in thinking and cannot be disabled; please use
+// low, high, or max"). Z.ai's Anthropic-compatible endpoint takes
+// `thinking: { type: "enabled" }` plus this separate `reasoning_effort`
+// field (low/high/max — not part of Anthropic's own Messages API schema).
+// "low" trades reasoning depth for latency/cost, appropriate for a chat-style
+// tutoring turn where the loop can already run up to 25 iterations.
+export const GLM_REASONING_EFFORT = "low";
 
 type ClientConfig = { apiKey: string | null | undefined; baseURL?: string };
 

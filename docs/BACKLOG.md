@@ -162,17 +162,24 @@ ladder **14 → 30 → 90 days** · **max 4 attempts per rolling 12 months** · 
 
 ---
 
-## 6. GLM-5.3 live-API verification (Task 1, credential-blocked)
+## 6. GLM-5.3 live-API verification (Task 1) — partially done, pricing still unconfirmed
 
-The model id `"glm-5.3"` (`src/lib/anthropic.ts`) and its pricing — $1.40 / $4.40 per 1M tokens
-in/out (`src/lib/billing/pricing.ts`) — are sourced from public pricing announcements, not verified
-against Z.ai's live Anthropic-compatible endpoint (`https://api.z.ai/api/anthropic`). No
-`GLM_API_KEY` credential has been available in any environment this feature was built in, so the
-smoke test described as Task 1 in
-`docs/superpowers/plans/2026-08-22-glm-provider-support.md` has never run. When a real key is
-supplied, run that smoke test and correct `TUTOR_MODEL_BY_PROVIDER.glm` / `PRICES["glm-5.3"]` if
-Z.ai's actual API returns a different model id string, different pricing, or a different `usage`
-object shape than assumed.
+**Update 2026-08-22:** a real `GLM_API_KEY` became available and surfaced a live bug: GLM-5.3
+always reasons and rejects a request with no `thinking` config (error 1210 — "This model always
+engages in thinking and cannot be disabled; please use low, high, or max"). Fixed in
+`src/lib/tutor/loop.ts` / `src/lib/anthropic.ts` (`GLM_REASONING_EFFORT`) — sends
+`thinking: {type: "enabled", budget_tokens: 1024}` (the Anthropic-schema field the SDK's types
+require, unused by Z.ai) plus Z.ai's own `reasoning_effort: "low"` field. Live-confirmed after the
+fix: the model id `"glm-5.3"` (`src/lib/anthropic.ts`) echoes back exactly, `stop_reason` values
+match what the loop already handles, and the `usage` object's field names
+(`input_tokens`/`output_tokens`/`cache_read_input_tokens`) match what `fromSdkUsage`
+(`src/lib/billing/usage.ts`) expects — a real turn billed correctly with no missing-field fallback.
+
+**Still unconfirmed:** the pricing table — $1.40 / $4.40 per 1M tokens in/out
+(`src/lib/billing/pricing.ts`) — is sourced from public announcements, not from an actual Z.ai
+invoice/billing dashboard. Confirm against real billing once enough GLM usage has accrued to check.
+Also worth trying `reasoning_effort: "high"` or `"max"` on a real tutoring session to see whether
+answer quality changes meaningfully before committing to `"low"` as the permanent default.
 
 **Also revisit once the above lands: GLM may not actually be the cheaper backend.** The plan
 assumed GLM's headline rate makes it obviously cheap, but that was computed before prompt caching
