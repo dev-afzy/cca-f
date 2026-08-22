@@ -36,7 +36,7 @@ A fresh user's Student + trial wallet is created on first login.
 | Var | Notes |
 |---|---|
 | `ANTHROPIC_API_KEY` | server-side; powers the tutor. Set Anthropic spend alerts. |
-| `GLM_API_KEY` / `GLM_BASE_URL` | optional; enables the GLM-5.3 tutor option on the settings page. Leave blank to offer Claude only — the settings page hides the GLM option when unset (see `glmAvailable` in `src/app/settings/page.tsx`). |
+| `GLM_API_KEY` / `GLM_BASE_URL` | optional; enables the GLM-5.3 tutor option on the settings page. Leave blank to offer Claude only — the settings page disables the GLM option when unset (shown with a reason) (see `glmAvailable` in `src/app/settings/page.tsx`). |
 | `AUTH_SECRET` | `npx auth secret` (fresh value for prod) |
 | `AUTH_URL` | your prod origin, e.g. `https://cca-f.example.com` (no trailing slash) |
 | `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` | GitHub OAuth app (prod callback below) |

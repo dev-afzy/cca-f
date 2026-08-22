@@ -17,6 +17,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "invalid body" }, { status: 400 });
   }
 
+  if (provider === "glm" && !process.env.GLM_API_KEY) {
+    return NextResponse.json({ error: "glm_not_configured" }, { status: 400 });
+  }
+
   await prisma.student.update({
     where: { id: userId },
     data: { preferredProvider: provider },
