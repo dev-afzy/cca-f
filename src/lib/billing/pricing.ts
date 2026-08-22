@@ -31,6 +31,19 @@ export const PRICES: Record<
     cacheWrite: 1_250_000,
     cacheRead: 100_000,
   },
+  // $1.40 / $4.40 per 1M tokens (in/out) — https://venturebeat.com/technology/glm-5-3-hits-the-api-at-1-4-4-4-per-million-tokens
+  // Cache rates are NOT confirmed for Z.ai's endpoint (see
+  // docs/superpowers/plans/2026-08-22-glm-compat-findings.md). Defaulting
+  // cacheWrite/cacheRead to the base input rate is deliberately conservative:
+  // if GLM turns out not to discount cached tokens, this doesn't overbill; if
+  // it does and this table is wrong, it undercounts the discount rather than
+  // manufacturing one that was never measured. Revisit once confirmed.
+  "glm-5.3": {
+    in: 1_400_000,
+    out: 4_400_000,
+    cacheWrite: 1_400_000,
+    cacheRead: 1_400_000,
+  },
 };
 
 /**
