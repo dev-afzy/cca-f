@@ -391,6 +391,12 @@ function ChatClientInner({
               >
                 Billing
               </a>
+              <a
+                href="/settings"
+                className="ml-1 text-[10px] text-stone-500 dark:text-stone-400 hover:text-amber-700 dark:hover:text-amber-400 font-medium underline underline-offset-2 transition-colors"
+              >
+                Settings
+              </a>
             </span>
             <ThemeToggle />
           </div>
