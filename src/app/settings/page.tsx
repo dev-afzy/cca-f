@@ -12,6 +12,7 @@ export default async function SettingsPage() {
     where: { id: userId },
     select: { preferredProvider: true },
   });
+  const glmAvailable = Boolean(process.env.GLM_API_KEY);
 
   return (
     <main className="min-h-screen bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100">
@@ -27,7 +28,7 @@ export default async function SettingsPage() {
           Choose which model runs your tutoring conversations. This does not change the curriculum
           or question bank — both are fixed content, answered by whichever model you pick here.
         </p>
-        <ProviderPicker initialProvider={student?.preferredProvider ?? "anthropic"} />
+        <ProviderPicker initialProvider={student?.preferredProvider ?? "anthropic"} glmAvailable={glmAvailable} />
       </div>
     </main>
   );

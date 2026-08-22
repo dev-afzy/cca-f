@@ -7,7 +7,13 @@ const PROVIDERS = [
   { id: "glm", label: "GLM-5.3", note: "A separate model explaining the same Claude-specific material — answers may differ from Claude's own." },
 ] as const;
 
-export default function ProviderPicker({ initialProvider }: { initialProvider: string }) {
+export default function ProviderPicker({
+  initialProvider,
+  glmAvailable,
+}: {
+  initialProvider: string;
+  glmAvailable: boolean;
+}) {
   const [selected, setSelected] = useState(initialProvider);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +43,7 @@ export default function ProviderPicker({ initialProvider }: { initialProvider: s
         <button
           key={p.id}
           onClick={() => void choose(p.id)}
-          disabled={saving}
+          disabled={saving || (p.id === "glm" && !glmAvailable)}
           className={`text-left rounded-xl border p-4 transition-colors disabled:opacity-50 ${
             selected === p.id
               ? "border-amber-500 bg-amber-50 dark:bg-amber-950/30"
@@ -46,6 +52,9 @@ export default function ProviderPicker({ initialProvider }: { initialProvider: s
         >
           <div className="font-medium text-sm text-stone-800 dark:text-stone-100">{p.label}</div>
           <div className="text-xs text-stone-500 dark:text-stone-400 mt-1">{p.note}</div>
+          {p.id === "glm" && !glmAvailable && (
+            <div className="text-[11px] text-rose-500 mt-1">Not configured by the site owner yet.</div>
+          )}
         </button>
       ))}
       {error && <span className="text-[11px] text-rose-500">{error}</span>}
