@@ -100,6 +100,7 @@ export async function POST(req: NextRequest) {
             intent,
             message,
             ledgerSnapshot,
+            provider: student.preferredProvider as "anthropic" | "glm",
           },
           (event: LoopEvent) => send(event)
         );

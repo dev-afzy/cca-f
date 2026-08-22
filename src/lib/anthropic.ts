@@ -8,11 +8,6 @@ export type TutorProvider = "anthropic" | "glm";
 // doubling the provider surface there has no user-facing benefit.
 export const MODEL_ROUTER = "claude-haiku-4-5-20251001";
 
-// Kept for loop.ts, which is unaffected by provider selection — it always
-// wants the Anthropic model under this exact export name. Will be removed
-// in a later task once loop.ts stops depending on it.
-export const MODEL_TUTOR = "claude-sonnet-4-6";
-
 const TUTOR_MODEL_BY_PROVIDER: Record<TutorProvider, string> = {
   anthropic: "claude-sonnet-4-6",
   glm: "glm-5.3", // confirmed against docs/superpowers/plans/2026-08-22-glm-compat-findings.md

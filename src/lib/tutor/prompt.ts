@@ -75,6 +75,12 @@ ${CONCEPT_SLUGS.join(", ")}
 - When the user's answer includes a \`[confidence: guess|maybe|sure]\` marker, factor it into your \`record_attempt\`/\`update_mastery\` calls. A correct answer with low confidence is fragile — still call \`record_attempt\`, but in your follow-up text, ask one quick "why did you pick that?" prompt to consolidate. A wrong answer flagged "guess" should reduce mastery less aggressively than a confidently wrong answer (think -2 vs -5 in your mental model when computing \`newPct\`).
 - On first mention of any technical concept (model name like Sonnet/Haiku/Opus, system primitive like MCP, tool_use, prompt cache, agentic loop, etc.), bold it with \`**term**\`. This anchors attention to the key noun. Don't bold the same term again in the same response.`;
 
+type CacheMarker = { cache_control: { type: "ephemeral" } } | Record<string, never>;
+
+function maybeCache(enabled: boolean): CacheMarker {
+  return enabled ? { cache_control: { type: "ephemeral" } } : {};
+}
+
 type PromptInput = {
   student: { id: string; currentHour: number };
   ledgerSnapshot: LedgerSnapshot;
@@ -83,6 +89,7 @@ type PromptInput = {
   history: MessageParam[];
   intent: Intent;
   message: string;
+  enablePromptCaching: boolean;
 };
 
 type PromptResult = {
@@ -128,7 +135,7 @@ export function buildPrompt(input: PromptInput): PromptResult {
     {
       type: "text",
       text: TUTOR_SYSTEM_PROMPT,
-      cache_control: { type: "ephemeral" },
+      ...maybeCache(input.enablePromptCaching),
     },
   ];
 
@@ -143,12 +150,12 @@ export function buildPrompt(input: PromptInput): PromptResult {
         {
           type: "text",
           text: `# Operating Contract\n\n${skillMd}\n\n# Pedagogy\n\n${pedagogyMd}\n\n# Question Bank\n\n${questionBankMd}`,
-          cache_control: { type: "ephemeral" },
+          ...maybeCache(input.enablePromptCaching),
         },
         {
           type: "text",
           text: `# Current Hour Curriculum\n\nHour ${hourNum}: ${hourLabel}\n\n${hourCurriculum}\n\n# Valid concept slugs\n${CONCEPT_SLUGS.join(", ")}`,
-          cache_control: { type: "ephemeral" },
+          ...maybeCache(input.enablePromptCaching),
         },
         {
           type: "text",

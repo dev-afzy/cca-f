@@ -112,6 +112,7 @@ export async function POST() {
             intent,
             message: lastUserMessage,
             ledgerSnapshot,
+            provider: student.preferredProvider as "anthropic" | "glm",
           },
           (event: LoopEvent) => send(event)
         );
