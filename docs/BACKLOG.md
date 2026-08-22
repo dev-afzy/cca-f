@@ -49,7 +49,7 @@ workflow-vs-agentic-vs-augmented-LLM pattern selection.
 
 **Blast radius if built:** the app is currently single-track — `HOUR_TOPICS`, `CONCEPT_SEED`,
 `DOMAIN_LABELS`, `EXAM_DOMAIN_WEIGHTS`, `validate-content.ts` and `state-template.md` all assume
-**one** curriculum with 5 domains and 23 hours. A second track needs a track discriminator through
+**one** curriculum with 5 domains and 24 hours. A second track needs a track discriminator through
 all of those (or a separate seed namespace). Non-trivial — scope before building.
 
 **Prerequisite:** pass Foundations first. Professional's MQC profile assumes **3+ yrs systems
@@ -106,7 +106,7 @@ question. As a safety guard, `fetch_question` now filters to `responseCount: 1`
 **correctly and still be marked wrong**, docking mastery.
 
 Consequence: multiple-response items are currently practised **only in the timed mocks**, not in the
-23 hours of tutoring checkpoints. To close it, add `chosenKeys?: string[]` to the `record_attempt`
+24 hours of tutoring checkpoints. To close it, add `chosenKeys?: string[]` to the `record_attempt`
 tool schema (`src/lib/tutor/tools.ts`), pass it to the existing `gradeAnswerSet`, tell the model in
 the tool description to collect all N selections before recording, then drop the `responseCount: 1`
 filter. Moderate change to a tool schema + prompt; not required for mock realism.
@@ -120,13 +120,13 @@ out **correct**, but the surrounding text is now stale:
 
 | File | Stale content | Fix |
 |---|---|---|
-| `.claude/skills/curriculum.md:428` | *"guide (v0.1) does not state question count or time limit"* | v1.0 publishes 60 items / 120 min |
-| `.claude/skills/curriculum.md` Hour 23 | same claim in exam-day strategy | same |
+| `.claude/skills/curriculum.md` (search "does not state question count") | *"guide (v0.1) does not state question count or time limit"* | v1.0 publishes 60 items / 120 min |
+| `.claude/skills/curriculum.md` Hour 24 (exam-day strategy) | same claim | same |
 | `.claude/skills/question-bank.md:3` | 60/120 flagged as *"our assumption"* | now official |
-| curriculum.md:3, :23-24 · question-bank.md:54 | cites *"v0.1"* | → v1.0, July 2026, CCAR-F |
+| curriculum.md (top-of-file + Hour 1 exam map) · question-bank.md:54 | cites *"v0.1"* | → v1.0, July 2026, CCAR-F |
 | `.claude/skills/SKILL.md` | *"possibly delisted"* on the Agent Skills course | it is **live**; also add *Introduction to subagents* |
 
-**Missing mechanics to teach (Hour 1 / Hour 23):** $125/attempt · Pearson VUE (online or test
+**Missing mechanics to teach (Hour 1 / Hour 24):** $125/attempt · Pearson VUE (online or test
 center) · closed book, no browser translation · ~135 min seat time vs 120 min answering · retake
 ladder **14 → 30 → 90 days** · **max 4 attempts per rolling 12 months** · credential valid 12 months
 · the four-tier certification landscape.
@@ -159,3 +159,27 @@ ladder **14 → 30 → 90 days** · **max 4 attempts per rolling 12 months** · 
   official six-scenario pool but have **no deep-dive or sample questions in either guide version** —
   a candidate can draw a scenario with zero published prep material. Consider covering them
   defensively.
+
+---
+
+## 6. GLM-5.3 live-API verification (Task 1, credential-blocked)
+
+The model id `"glm-5.3"` (`src/lib/anthropic.ts`) and its pricing — $1.40 / $4.40 per 1M tokens
+in/out (`src/lib/billing/pricing.ts`) — are sourced from public pricing announcements, not verified
+against Z.ai's live Anthropic-compatible endpoint (`https://api.z.ai/api/anthropic`). No
+`GLM_API_KEY` credential has been available in any environment this feature was built in, so the
+smoke test described as Task 1 in
+`docs/superpowers/plans/2026-08-22-glm-provider-support.md` has never run. When a real key is
+supplied, run that smoke test and correct `TUTOR_MODEL_BY_PROVIDER.glm` / `PRICES["glm-5.3"]` if
+Z.ai's actual API returns a different model id string, different pricing, or a different `usage`
+object shape than assumed.
+
+**Also revisit once the above lands: GLM may not actually be the cheaper backend.** The plan
+assumed GLM's headline rate makes it obviously cheap, but that was computed before prompt caching
+was gated off for GLM (caching compatibility is itself unconfirmed — see above). The tutor loop
+resends the full ~15k-token cacheable bundle (`SKILL.md` + `pedagogy.md` + `question-bank.md` +
+system prompt) on every iteration, uncached, for GLM; Claude pays that cost once via `cacheWrite`
+then `cacheRead` at a fraction of the rate on every later iteration. Rough modeling of a 5-iteration
+turn puts GLM only marginally cheaper than cached Claude, and a longer tool-heavy turn can make GLM
+the *more* expensive option. Measure a real GLM turn's `UsageEvent` once a key is available before
+describing GLM as the economical choice anywhere user-facing.

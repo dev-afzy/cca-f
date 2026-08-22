@@ -68,7 +68,7 @@ export async function renderLedger(studentId: string, now = new Date()): Promise
   }
 
   // [Next Up] block
-  const nextHour = Math.min(currentHour + 1, 23);
+  const nextHour = Math.min(currentHour + 1, 24);
   const nextTopic = HOUR_TOPICS[nextHour] ?? "TBD";
   const unresolvedFriction = student.frictionPoints.find((fp) => !fp.resolved);
   const warmUp = unresolvedFriction
@@ -184,7 +184,7 @@ export async function renderLedger(studentId: string, now = new Date()): Promise
 
 ## [Current Session]
 
-- Hour: ${currentHour} / 23
+- Hour: ${currentHour} / 24
 - Week: ${week}
 - Sprint start date: ${sprintStartStr}
 - Target exam date: ${targetExamStr}

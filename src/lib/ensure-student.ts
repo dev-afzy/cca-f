@@ -2,8 +2,7 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ensureWallet } from "@/lib/billing/wallet";
-
-const SPRINT_DAYS = 23;
+import { SPRINT_DAYS } from "@/lib/sprint-dates";
 
 /**
  * Make sure a Student profile exists for this authenticated user.

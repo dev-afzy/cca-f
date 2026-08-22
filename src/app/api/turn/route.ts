@@ -7,6 +7,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { classifyIntent } from "@/lib/router";
 import { runTutorLoop, type LoopEvent } from "@/lib/tutor/loop";
+import { resolveProvider } from "@/lib/anthropic";
 import { getOrCreateOpenSession } from "@/lib/tutor/session";
 import { buildLedgerSnapshot } from "@/lib/tutor/ledger-snapshot";
 import { getMasterySnapshot } from "@/lib/tutor/mastery";
@@ -100,6 +101,7 @@ export async function POST(req: NextRequest) {
             intent,
             message,
             ledgerSnapshot,
+            provider: resolveProvider(student.preferredProvider),
           },
           (event: LoopEvent) => send(event)
         );

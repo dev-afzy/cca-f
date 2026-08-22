@@ -63,10 +63,10 @@ export default async function LedgerPage() {
 
   const currentHour = student.currentHour;
   const week =
-    currentHour <= 7 ? 1 : currentHour <= 14 ? 2 : currentHour <= 19 ? 3 : 4;
+    currentHour <= 7 ? 1 : currentHour <= 14 ? 2 : currentHour <= 20 ? 3 : 4;
   const sprintStartStr = student.sprintStartDate.toISOString().slice(0, 10);
   const targetExamStr = student.targetExamDate.toISOString().slice(0, 10);
-  const nextHour = Math.min(currentHour + 1, 23);
+  const nextHour = Math.min(currentHour + 1, 24);
   const nextTopic = HOUR_TOPICS[nextHour] ?? "TBD";
 
   const week1Masteries = student.masteries.filter((m) => m.concept.week === 1);
@@ -113,7 +113,7 @@ export default async function LedgerPage() {
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {[
-              { label: "Hour", value: `${currentHour} / 23` },
+              { label: "Hour", value: `${currentHour} / 24` },
               { label: "Week", value: String(week) },
               { label: "Sprint start", value: sprintStartStr },
               { label: "Target exam", value: targetExamStr },

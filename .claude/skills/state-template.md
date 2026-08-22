@@ -13,10 +13,10 @@ The instructor reads this file at the start of every session and treats it as th
 
 ## [Current Session]
 
-- Hour: <N> / 23
+- Hour: <N> / 24
 - Week: <1 | 2 | 3 | 4>
 - Sprint start date: <YYYY-MM-DD>
-- Target exam date: <YYYY-MM-DD>          # default: sprint start + 23 days
+- Target exam date: <YYYY-MM-DD>          # default: sprint start + 24 days
 - Days elapsed: <N>
 - Days remaining in sprint: <N>
 - Ledger file path: ~/.cca-f-tutor/student-ledger.md   # update if user chose elsewhere

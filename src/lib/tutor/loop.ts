@@ -1,6 +1,6 @@
 import "server-only";
-import { anthropic, MODEL_TUTOR } from "@/lib/anthropic";
-import { TUTOR_TOOLS } from "./tools";
+import { getTutorClient, getTutorModel, type TutorProvider } from "@/lib/anthropic";
+import { tutorTools } from "./tools";
 import { buildPrompt } from "./prompt";
 import { executeTool, type ToolContext } from "./tool-handlers";
 import type { Intent, LedgerSnapshot, ToolCallLog } from "@/lib/types";
@@ -19,6 +19,7 @@ type LoopInput = {
   message: string;
   ledgerSnapshot: LedgerSnapshot;
   iterationCap?: number;
+  provider?: TutorProvider;
 };
 
 export type LoopEvent =
@@ -47,6 +48,10 @@ export async function runTutorLoop(
   const fullText: string[] = [];
   let usage: TokenUsage = ZERO_USAGE;
 
+  const provider: TutorProvider = input.provider ?? "anthropic";
+  const client = getTutorClient(provider);
+  const model = getTutorModel(provider);
+
   const ctx: ToolContext = {
     studentId: input.student.id,
     sessionId: input.session.id,
@@ -59,16 +64,17 @@ export async function runTutorLoop(
     history: input.history,
     intent: input.intent,
     message: input.message,
+    enablePromptCaching: provider === "anthropic",
   });
 
   const messages: MessageParam[] = [...initialMessages];
 
   for (let i = 0; i < cap; i++) {
-    const stream = anthropic.messages.stream({
-      model: MODEL_TUTOR,
+    const stream = client.messages.stream({
+      model,
       system,
       messages,
-      tools: TUTOR_TOOLS,
+      tools: tutorTools(provider === "anthropic"),
       max_tokens: 2048,
     });
 
@@ -148,7 +154,7 @@ export async function runTutorLoop(
         toolCalls,
         stoppedAt: response.stop_reason as "end_turn" | "stop_sequence",
         usage,
-        model: MODEL_TUTOR,
+        model,
       };
     }
 
@@ -158,7 +164,7 @@ export async function runTutorLoop(
       toolCalls,
       stoppedAt: "end_turn",
       usage,
-      model: MODEL_TUTOR,
+      model,
     };
   }
 
@@ -172,6 +178,6 @@ export async function runTutorLoop(
     toolCalls,
     stoppedAt: "iteration_cap",
     usage,
-    model: MODEL_TUTOR,
+    model,
   };
 }

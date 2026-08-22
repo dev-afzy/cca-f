@@ -14,6 +14,7 @@ model Student {
   prerequisites     String   @default("Agent Skills | Claude API | MCP | Claude Code")
   timezone          String   @default("")
   preferredStyle    String   @default("[]")
+  preferredProvider String   @default("anthropic")
   currentHour       Int      @default(0)
   sprintStartDate   DateTime
   targetExamDate    DateTime
